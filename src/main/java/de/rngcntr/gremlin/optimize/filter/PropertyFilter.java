@@ -25,6 +25,14 @@ public class PropertyFilter<E extends Element> extends ElementFilter<E> {
         return stats.withProperty(this);
     }
 
+    public String getKey() {
+        return key;
+    }
+
+    public P<?> getPredicate() {
+        return predicate;
+    }
+
     @Override
     public String toString() {
         return String.format("%s=%s", key, predicate);
