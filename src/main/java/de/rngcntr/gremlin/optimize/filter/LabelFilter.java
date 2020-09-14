@@ -29,4 +29,9 @@ public class LabelFilter<E extends Element> extends ElementFilter<E> {
     public long estimateSelectivity(StatisticsProvider stats) {
         return stats.withLabel(this);
     }
+
+    @Override
+    public String toString() {
+        return String.format("~label=%s", label);
+    }
 }

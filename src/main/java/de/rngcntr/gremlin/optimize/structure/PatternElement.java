@@ -6,7 +6,6 @@ import de.rngcntr.gremlin.optimize.retrieval.dependent.DependentRetrieval;
 import de.rngcntr.gremlin.optimize.retrieval.direct.DirectRetrieval;
 import de.rngcntr.gremlin.optimize.retrieval.Retrieval;
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
-import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
 import java.util.*;
@@ -17,10 +16,25 @@ public abstract class PatternElement<E extends Element> implements Comparable<Pa
     protected LabelFilter<E> labelFilter;
     protected Collection<PropertyFilter<E>> propertyFilters;
     protected List<Retrieval<E>> retrievals;
+    protected String stepLabel;
+    protected int id;
 
     public PatternElement(Class<E> type) {
         this.type = type;
-        propertyFilters = new ArrayList<>();
+        this.isFinal = false;
+        this.labelFilter = null;
+        this.propertyFilters = new ArrayList<>();
+        this.retrievals = new ArrayList<>();
+        this.stepLabel = null;
+        this.id = IdProvider.getInstance().getNextId();
+    }
+
+    public void setStepLabel(String stepLabel) {
+        this.stepLabel = stepLabel;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public void initializeRetrievals() {

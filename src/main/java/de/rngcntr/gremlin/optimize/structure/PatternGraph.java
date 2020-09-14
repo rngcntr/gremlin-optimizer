@@ -14,6 +14,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
 import org.apache.tinkerpop.gremlin.structure.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PatternGraph {
     private final Collection<PatternElement<?>> elements;
@@ -135,5 +136,11 @@ public class PatternGraph {
     private GraphTraversal<?,?> buildTraversal() {
         // TODO
         return new DefaultGraphTraversal<>();
+    }
+
+    @Override
+    public String toString() {
+        return elements.stream().map(PatternElement::toString)
+                .collect(Collectors.joining("\n", "Graph consisting of:\n", ""));
     }
 }

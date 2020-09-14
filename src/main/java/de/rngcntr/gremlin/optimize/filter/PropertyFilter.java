@@ -24,4 +24,9 @@ public class PropertyFilter<E extends Element> extends ElementFilter<E> {
     public long estimateSelectivity(StatisticsProvider stats) {
         return stats.withProperty(this);
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s=%s", key, predicate);
+    }
 }

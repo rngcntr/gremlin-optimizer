@@ -54,4 +54,11 @@ public class PatternEdge extends PatternElement<Edge> {
         neighbors.add(end);
         return neighbors;
     }
+
+    @Override
+    public String toString() {
+        String alias = stepLabel == null ? "" : String.format(" aka. \"%s\"", stepLabel);
+        return String.format("Edge %d%s (%s)\n\tProperties: %s\n\tIn: %d\n\tOut: %d", id,
+                alias, labelFilter, propertyFilters, start.getId(), end.getId());
+    }
 }

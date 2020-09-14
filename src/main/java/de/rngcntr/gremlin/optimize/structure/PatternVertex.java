@@ -10,6 +10,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class PatternVertex extends PatternElement<Vertex> {
     private final Collection<PatternEdge> in;
@@ -53,5 +54,14 @@ public class PatternVertex extends PatternElement<Vertex> {
         neighbors.addAll(in);
         neighbors.addAll(out);
         return neighbors;
+    }
+
+    @Override
+    public String toString() {
+        String alias = stepLabel == null ? "" : String.format(" aka. \"%s\"", stepLabel);
+        return String.format("Vertex %d%s (%s)\n\tProperties: %s\n\tIn: %s\n\tOut: %s", id,
+                alias, labelFilter, propertyFilters,
+                in.stream().map(PatternElement::getId).collect(Collectors.toList()),
+                out.stream().map(PatternElement::getId).collect(Collectors.toList()));
     }
 }
