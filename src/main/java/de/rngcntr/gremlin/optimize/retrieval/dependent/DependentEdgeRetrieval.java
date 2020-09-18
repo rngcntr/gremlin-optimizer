@@ -1,7 +1,10 @@
 package de.rngcntr.gremlin.optimize.retrieval.dependent;
 
+import de.rngcntr.gremlin.optimize.filter.PropertyFilter;
 import de.rngcntr.gremlin.optimize.structure.PatternEdge;
 import de.rngcntr.gremlin.optimize.structure.PatternVertex;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.DefaultGraphTraversal;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.VertexStep;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
@@ -11,6 +14,14 @@ public class DependentEdgeRetrieval extends DependentRetrieval<Edge> {
         super(retrievedType);
         this.element = edge;
         this.source = source;
-        t.addStep(new VertexStep<>(t, Edge.class, direction));
+        this.direction = direction;
+    }
+
+    @Override
+    protected GraphTraversal<?, Edge> getBaseTraversal() {
+        GraphTraversal.Admin<?, Edge> t = new DefaultGraphTraversal<>();
+        t = t.as(String.valueOf(source.getId())).asAdmin();
+        t.addStep(new VertexStep(t, Edge.class, direction));
+        return t;
     }
 }

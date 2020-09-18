@@ -1,26 +1,30 @@
 package de.rngcntr.gremlin.optimize.structure;
 
-import de.rngcntr.gremlin.optimize.filter.LabelFilter;
-import de.rngcntr.gremlin.optimize.filter.PropertyFilter;
+import de.rngcntr.gremlin.optimize.retrieval.dependent.DependentRetrieval;
+import de.rngcntr.gremlin.optimize.retrieval.direct.DirectRetrieval;
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
+import de.rngcntr.gremlin.optimize.step.JoinStep;
+import de.rngcntr.gremlin.optimize.util.GremlinParser;
+import de.rngcntr.gremlin.optimize.util.GremlinWriter;
 import org.apache.tinkerpop.gremlin.process.traversal.Step;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.DefaultGraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
+import org.apache.tinkerpop.gremlin.process.traversal.step.Scoping;
 import org.apache.tinkerpop.gremlin.process.traversal.step.filter.HasStep;
-import org.apache.tinkerpop.gremlin.process.traversal.step.map.EdgeVertexStep;
-import org.apache.tinkerpop.gremlin.process.traversal.step.map.VertexStep;
+import org.apache.tinkerpop.gremlin.process.traversal.step.map.*;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.EmptyStep;
-import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
-import org.apache.tinkerpop.gremlin.structure.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class PatternGraph {
-    private final Collection<PatternElement<?>> elements;
+    private final List<PatternElement<?>> elements;
+    private final Map<String, PatternElement<?>> stepLabelMap;
+    private final Set<PatternElement<?>> elementsToReturn;
 
     public PatternGraph(GraphTraversal<?,?> t) {
         elements = new ArrayList<>();
+        stepLabelMap = new HashMap<>();
+        elementsToReturn = new HashSet<>();
         buildGraphFromTraversal(t);
     }
 
@@ -29,84 +33,46 @@ public class PatternGraph {
         for (Step<?, ?> currentStep = t.asAdmin().getStartStep();
              currentStep != EmptyStep.instance();
              currentStep = currentStep.getNextStep()) {
-            if (currentStep instanceof HasStep<?>) {
-                parseHasStep((HasStep<?>) currentStep, currentElement);
+
+            if (currentStep instanceof GraphStep<?,?>) {
+                currentElement = GremlinParser.parseGraphStep((GraphStep<?, ?>) currentStep);
+                elements.add(currentElement);
+            } else if (currentElement == null) {
+                throw new IllegalArgumentException("Traversal must start with GraphStep: " + t);
+            } else if (currentStep instanceof HasStep<?>) {
+                GremlinParser.parseHasStep((HasStep<?>) currentStep, currentElement);
             } else if (currentStep instanceof VertexStep<?>) {
-                List<PatternElement<?>> newElements = parseVertexStep((VertexStep<?>) currentStep, (PatternVertex) currentElement);
+                List<PatternElement<?>> newElements = GremlinParser.parseVertexStep((VertexStep<?>) currentStep, (PatternVertex) currentElement);
                 elements.addAll(newElements);
                 currentElement = newElements.get(0);
             } else if (currentStep instanceof EdgeVertexStep) {
-                currentElement = parseEdgeStep((EdgeVertexStep) currentStep, (PatternEdge) currentElement);
+                currentElement = GremlinParser.parseEdgeStep((EdgeVertexStep) currentStep, (PatternEdge) currentElement);
                 elements.add(currentElement);
-            }
-        }
-    }
-
-    private static <E extends Element> void parseHasStep(HasStep<?> hasStep, PatternElement<E> currentElement) {
-        if (currentElement == null) {
-            return;
-        }
-
-        for (HasContainer hc : hasStep.getHasContainers()) {
-            if (hc.getKey().equals(T.label.getAccessor())) {
-                // assuming P.eq(label)
-                LabelFilter<E> filter = new LabelFilter(currentElement.getType(), (String) hc.getValue());
-                currentElement.setLabelFilter(filter);
+            } else if (currentStep instanceof SelectStep || currentStep instanceof SelectOneStep) {
+                if (currentStep.getNextStep() != EmptyStep.instance()) {
+                    // TODO currently, only select steps at the end of the query are supported
+                    throw new IllegalArgumentException("Select steps are only allowed at the end of a query");
+                }
+                Set<String> selectedLabels = GremlinParser.parseSelectStep((Scoping) currentStep);
+                selectedLabels.forEach(l -> {
+                    PatternElement<?> elem = stepLabelMap.get(l);
+                    if (elem == null) throw new IllegalArgumentException("Step label " + l + " is undefined");
+                    elementsToReturn.add(elem);
+                });
             } else {
-                PropertyFilter<E> filter = new PropertyFilter(currentElement.getType(), hc.getKey(), hc.getPredicate());
-                currentElement.addPropertyFilter(filter);
+                throw new IllegalArgumentException("Unsupported step: " + currentStep);
+            }
+
+            for (String stepLabel : currentStep.getLabels()) {
+                stepLabelMap.put(stepLabel, currentElement);
             }
         }
-    }
 
-    private static List<PatternElement<?>> parseVertexStep(VertexStep<?> vertexStep, PatternVertex currentElement) {
-        if (vertexStep.returnsVertex()) {
-            return parseVertexVertexStep((VertexStep<Vertex>) vertexStep, currentElement);
-        } else {
-            return parseVertexEdgeStep((VertexStep<Edge>) vertexStep, currentElement);
+        assert currentElement != null;
+        if (elementsToReturn.isEmpty()) {
+            // if no select step was parsed, return the last element
+            elementsToReturn.add(currentElement);
         }
-    }
-
-    private static List<PatternElement<?>> parseVertexVertexStep(VertexStep<Vertex> vertexStep, PatternVertex currentVertex) {
-        String edgeLabel = vertexStep.getEdgeLabels().length > 0 ? vertexStep.getEdgeLabels()[0] : null;
-        Direction direction = vertexStep.getDirection();
-
-        PatternEdge newEdge = createEdge(edgeLabel, currentVertex, direction);
-
-        PatternVertex newVertex = new PatternVertex();
-        newEdge.setVertex(newVertex, direction.opposite());
-        newVertex.addEdge(newEdge, vertexStep.getDirection().opposite());
-
-        return Arrays.asList(newVertex, newEdge);
-    }
-
-    private static List<PatternElement<?>> parseVertexEdgeStep(VertexStep<Edge> vertexStep, PatternVertex currentVertex) {
-        String edgeLabel = vertexStep.getEdgeLabels().length > 0 ? vertexStep.getEdgeLabels()[0] : null;
-        return Arrays.asList(createEdge(edgeLabel, currentVertex, vertexStep.getDirection()));
-    }
-
-    private static PatternEdge createEdge(String label, PatternVertex neighbor, Direction direction) {
-        PatternEdge newEdge = new PatternEdge();
-
-        if (label != null) {
-            LabelFilter<Edge> edgeLabelFilter = new LabelFilter<>(Edge.class, label);
-            newEdge.setLabelFilter(edgeLabelFilter);
-        }
-
-        neighbor.addEdge(newEdge, direction);
-        newEdge.setVertex(neighbor, direction);
-
-        return newEdge;
-    }
-
-    private static PatternVertex parseEdgeStep(EdgeVertexStep edgeStep, PatternEdge currentEdge) {
-        Direction direction = edgeStep.getDirection();
-        PatternVertex newVertex = new PatternVertex();
-
-        currentEdge.setVertex(newVertex, direction);
-        newVertex.addEdge(currentEdge, direction);
-
-        return newVertex;
     }
 
     public GraphTraversal<?,?> optimize(StatisticsProvider stats) {
@@ -134,8 +100,66 @@ public class PatternGraph {
     }
 
     private GraphTraversal<?,?> buildTraversal() {
-        // TODO
-        return new DefaultGraphTraversal<>();
+        Set<PatternElement<?>> directlyRetrieved = new HashSet<>();
+        Set<GraphTraversal<?,Map<String,Object>>> joinedTraversals = new HashSet<>();
+
+        /*
+         * find all directly retrievable elements
+         */
+        elements.stream()
+                .filter(elem -> elem.getBestRetrieval() instanceof DirectRetrieval)
+                .forEach(directlyRetrieved::add);
+
+        /*
+         * build pattern matching queries for dependent retrievals
+         */
+        for (PatternElement<?> baseElement : directlyRetrieved) {
+            Set<GraphTraversal<?,?>> matchTraversals = new HashSet<>();
+            Set<PatternElement<?>> elementsToBeSelected = new HashSet<>();
+            elementsToBeSelected.add(baseElement);
+            // run BFS to find neighbors dependent on this element
+            Queue<PatternElement<?>> elementQueue = new LinkedList<>(baseElement.getNeighbors());
+            while (!elementQueue.isEmpty()) {
+                PatternElement<?> dependentElement = elementQueue.poll();
+                elementsToBeSelected.add(dependentElement);
+                matchTraversals.add(dependentElement.getBestRetrieval().asTraversal());
+                dependentElement.getNeighbors().stream()
+                        .map(PatternElement::getBestRetrieval)
+                        .filter(retrieval -> retrieval instanceof DependentRetrieval)
+                        .map(retrieval -> (DependentRetrieval<?>) retrieval)
+                        .filter(retrieval -> retrieval.getSource() == dependentElement)
+                        .map(DependentRetrieval::getElement)
+                        .forEach(elementQueue::add);
+            }
+
+            GraphTraversal<?,?> assembledTraversal = baseElement.getBestRetrieval().asTraversal();
+            if (matchTraversals.size() > 0) {
+                assembledTraversal = assembledTraversal.match(matchTraversals.toArray(new GraphTraversal[0]));
+            }
+            joinedTraversals.add(GremlinWriter.applySelectStep(assembledTraversal, elementsToBeSelected));
+        }
+
+        Iterator<GraphTraversal<?,Map<String,Object>>> joinedTraversalIterator = joinedTraversals.iterator();
+        assert joinedTraversalIterator.hasNext();
+        GraphTraversal<?,?> completeTraversal = joinedTraversalIterator.next();
+        while (joinedTraversalIterator.hasNext()) {
+            completeTraversal.asAdmin().addStep(new JoinStep(completeTraversal.asAdmin(), joinedTraversalIterator.next()));
+        }
+        return GremlinWriter.applySelectStep(completeTraversal, elementsToReturn);
+    }
+
+    public List<PatternVertex> getVertices() {
+        return elements.stream()
+                .filter(e -> e instanceof PatternVertex)
+                .map(e -> (PatternVertex) e)
+                .collect(Collectors.toList());
+    }
+
+    public List<PatternEdge> getEdges() {
+        return elements.stream()
+                .filter(e -> e instanceof PatternEdge)
+                .map(e -> (PatternEdge) e)
+                .collect(Collectors.toList());
     }
 
     @Override

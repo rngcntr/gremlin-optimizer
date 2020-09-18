@@ -16,8 +16,7 @@ public abstract class PatternElement<E extends Element> implements Comparable<Pa
     protected LabelFilter<E> labelFilter;
     protected Collection<PropertyFilter<E>> propertyFilters;
     protected List<Retrieval<E>> retrievals;
-    protected String stepLabel;
-    protected int id;
+    protected long id;
 
     public PatternElement(Class<E> type) {
         this.type = type;
@@ -25,15 +24,10 @@ public abstract class PatternElement<E extends Element> implements Comparable<Pa
         this.labelFilter = null;
         this.propertyFilters = new ArrayList<>();
         this.retrievals = new ArrayList<>();
-        this.stepLabel = null;
         this.id = IdProvider.getInstance().getNextId();
     }
 
-    public void setStepLabel(String stepLabel) {
-        this.stepLabel = stepLabel;
-    }
-
-    public int getId() {
+    public long getId() {
         return id;
     }
 
@@ -94,6 +88,13 @@ public abstract class PatternElement<E extends Element> implements Comparable<Pa
 
     public Class<E> getType() {
         return type;
+    }
+
+    @Override
+    public String toString() {
+        String labelString = labelFilter == null || labelFilter.getLabel() == null
+                ? "" : String.format(" (%s)", labelFilter);
+        return String.format("[%d] %%s%s\n\tProperties: %s%%s", id, labelString, propertyFilters);
     }
 
     @Override

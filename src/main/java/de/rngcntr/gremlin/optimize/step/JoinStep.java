@@ -4,28 +4,23 @@ import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.FlatMapStep;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
-public class JoinStep<E> extends FlatMapStep<HashMap<String,E>, HashMap<String,E>> {
+public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>> {
 
     private boolean initialized;
-    private final Traversal<?, HashMap<String,E>> matchTraversal;
-    private final String[] joinAttributes;
+    private final Traversal<?, Map<String,Object>> matchTraversal;
 
-    private List<HashMap<String,E>> joinTuples;
+    private List<Map<String,Object>> joinTuples;
 
-    public JoinStep(Traversal.Admin traversal, Traversal<?, HashMap<String,E>> matchTraversal, String... joinAttributes) {
+    public JoinStep(Traversal.Admin traversal, Traversal<?, Map<String,Object>> matchTraversal) {
         super(traversal);
         this.initialized = false;
         this.matchTraversal = matchTraversal;
-        this.joinAttributes = joinAttributes;
     }
 
     @Override
-    protected Iterator<HashMap<String,E>> flatMap(Traverser.Admin<HashMap<String,E>> traverser) {
+    protected Iterator<Map<String,Object>> flatMap(Traverser.Admin<Map<String,Object>> traverser) {
         if (!initialized) {
             initialize();
         }
@@ -38,10 +33,10 @@ public class JoinStep<E> extends FlatMapStep<HashMap<String,E>, HashMap<String,E
         initialized = true;
     }
 
-    private Iterator<HashMap<String,E>> doNestedLoopsJoin(Traverser.Admin<HashMap<String,E>> traverser) {
-        List<HashMap<String,E>> results = new LinkedList<>();
+    private Iterator<Map<String,Object>> doNestedLoopsJoin(Traverser.Admin<Map<String,Object>> traverser) {
+        List<Map<String,Object>> results = new LinkedList<>();
 
-        for (HashMap<String,E> probe : joinTuples) {
+        for (Map<String,Object> probe : joinTuples) {
             if (match(probe, traverser.get())) {
                 results.add(merge(probe, traverser.get()));
             }
@@ -50,9 +45,9 @@ public class JoinStep<E> extends FlatMapStep<HashMap<String,E>, HashMap<String,E
         return results.iterator();
     }
 
-    private boolean match(HashMap<String,E> a, HashMap<String,E> b) {
-        for (String attr : joinAttributes) {
-            if (a.get(attr) != b.get(attr) || a.get(attr) == null) {
+    private boolean match(Map<String,Object> a, Map<String,Object> b) {
+        for (String attr : a.keySet()) {
+            if (a.get(attr) != b.get(attr) || b.get(attr) == null) {
                 return false;
             }
         }
@@ -60,8 +55,8 @@ public class JoinStep<E> extends FlatMapStep<HashMap<String,E>, HashMap<String,E
         return true;
     }
 
-    private HashMap<String,E> merge(HashMap<String,E> a, HashMap<String,E> b) {
-        HashMap<String,E> result = new HashMap<>();
+    private Map<String,Object> merge(Map<String,Object> a, Map<String,Object> b) {
+        Map<String,Object> result = new HashMap<>();
         result.putAll(a);
         result.putAll(b);
         return result;

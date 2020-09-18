@@ -58,10 +58,10 @@ public class PatternVertex extends PatternElement<Vertex> {
 
     @Override
     public String toString() {
-        String alias = stepLabel == null ? "" : String.format(" aka. \"%s\"", stepLabel);
-        return String.format("Vertex %d%s (%s)\n\tProperties: %s\n\tIn: %s\n\tOut: %s", id,
-                alias, labelFilter, propertyFilters,
+        String format = super.toString();
+        String vertexSpecific = String.format("\n\tIn: %s\n\tOut: %s",
                 in.stream().map(PatternElement::getId).collect(Collectors.toList()),
                 out.stream().map(PatternElement::getId).collect(Collectors.toList()));
+        return String.format(format, "VERTEX", vertexSpecific);
     }
 }

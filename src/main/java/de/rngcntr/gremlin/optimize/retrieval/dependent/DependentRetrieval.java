@@ -4,15 +4,21 @@ import de.rngcntr.gremlin.optimize.filter.LabelFilter;
 import de.rngcntr.gremlin.optimize.retrieval.Retrieval;
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
 import de.rngcntr.gremlin.optimize.structure.PatternElement;
+import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
 import java.util.Optional;
 
 public abstract class DependentRetrieval<E extends Element>  extends Retrieval<E> {
     protected PatternElement<?> source;
+    protected Direction direction;
 
     public DependentRetrieval(Class<E> retrievedType) {
         super(retrievedType);
+    }
+
+    public PatternElement<?> getSource() {
+        return source;
     }
 
     @Override

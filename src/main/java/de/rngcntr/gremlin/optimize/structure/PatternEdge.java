@@ -42,23 +42,33 @@ public class PatternEdge extends PatternElement<Edge> {
     @Override
     public Collection<DependentRetrieval<Edge>> generateDependentRetrievals() {
         ArrayList<DependentRetrieval<Edge>> retrievals = new ArrayList<>();
-        retrievals.add(new DependentEdgeRetrieval(Edge.class, this, start, Direction.OUT));
-        retrievals.add(new DependentEdgeRetrieval(Edge.class, this, end, Direction.IN));
+        if (start != null) {
+            retrievals.add(new DependentEdgeRetrieval(Edge.class, this, start, Direction.OUT));
+        }
+        if (end != null) {
+            retrievals.add(new DependentEdgeRetrieval(Edge.class, this, end, Direction.IN));
+        }
         return retrievals;
     }
 
     @Override
     public List<PatternElement<?>> getNeighbors() {
-        ArrayList<PatternElement<?>> neighbors = new ArrayList<>(2);
-        neighbors.add(start);
-        neighbors.add(end);
+        ArrayList<PatternElement<?>> neighbors = new ArrayList<>();
+        if (start != null) {
+            neighbors.add(start);
+        }
+        if (end != null) {
+            neighbors.add(end);
+        }
         return neighbors;
     }
 
     @Override
     public String toString() {
-        String alias = stepLabel == null ? "" : String.format(" aka. \"%s\"", stepLabel);
-        return String.format("Edge %d%s (%s)\n\tProperties: %s\n\tIn: %d\n\tOut: %d", id,
-                alias, labelFilter, propertyFilters, start.getId(), end.getId());
+        String format = super.toString();
+        String edgeSpecific = String.format("\n\tOut: %s\n\tIn: %s",
+                start != null ? start.getId() : -1,
+                end != null ? end.getId() : -1);
+        return String.format(format, "EDGE", edgeSpecific);
     }
 }

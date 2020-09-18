@@ -32,6 +32,6 @@ public class LabelFilter<E extends Element> extends ElementFilter<E> {
 
     @Override
     public String toString() {
-        return String.format("~label=%s", label);
+        return String.format("~label='%s'", label);
     }
 }
