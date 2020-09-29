@@ -6,9 +6,12 @@ import de.rngcntr.gremlin.optimize.retrieval.dependent.DependentRetrieval;
 import de.rngcntr.gremlin.optimize.retrieval.direct.DirectRetrieval;
 import de.rngcntr.gremlin.optimize.retrieval.Retrieval;
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
+import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class PatternElement<E extends Element> implements Comparable<PatternElement<?>> {
     private final Class<E> type;
@@ -46,6 +49,14 @@ public abstract class PatternElement<E extends Element> implements Comparable<Pa
         retrievals.stream()
                 .filter(r -> r instanceof DependentRetrieval)
                 .forEach(r -> r.estimate(stats));
+    }
+
+    public boolean isEdge() {
+        return type == Edge.class;
+    }
+
+    public boolean isVertex() {
+        return type == Vertex.class;
     }
 
     public void setLabelFilter(LabelFilter<E> labelFilter) {
@@ -100,5 +111,29 @@ public abstract class PatternElement<E extends Element> implements Comparable<Pa
     @Override
     public int compareTo(PatternElement<?> other) {
         return getBestRetrieval().compareTo(other.getBestRetrieval());
+    }
+
+    public List<PatternElement<?>> getDependentNeighbors() {
+        return getNeighbors().stream()
+            .map(PatternElement::getBestRetrieval)
+            .filter(retrieval -> retrieval instanceof DependentRetrieval)
+            .map(retrieval -> (DependentRetrieval<?>) retrieval)
+            .filter(retrieval -> retrieval.getSource() == this)
+            .map(DependentRetrieval::getElement).collect(Collectors.toList());
+    }
+
+    public Optional<DependentRetrieval<E>> getBestDependentRetrieval() {
+        return retrievals.stream()
+                .filter(r -> r instanceof DependentRetrieval)
+                .map(r -> (DependentRetrieval<E>) r)
+                .min(Comparator.comparing(Retrieval::getEstimatedSize));
+    }
+
+    public Optional<DependentRetrieval<E>> getDependentRetrieval(PatternElement<?> dependentElement) {
+        return retrievals.stream()
+                .filter(r -> r instanceof DependentRetrieval)
+                .map(r -> (DependentRetrieval<E>) r)
+                .filter(r -> r.getSource().equals(dependentElement))
+                .min(Comparator.comparing(Retrieval::getEstimatedSize));
     }
 }

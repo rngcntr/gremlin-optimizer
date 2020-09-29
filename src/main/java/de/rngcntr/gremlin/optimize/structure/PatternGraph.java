@@ -12,6 +12,8 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.Scoping;
 import org.apache.tinkerpop.gremlin.process.traversal.step.filter.HasStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.*;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.EmptyStep;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Graph;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,11 +22,13 @@ public class PatternGraph {
     private final List<PatternElement<?>> elements;
     private final Map<String, PatternElement<?>> stepLabelMap;
     private final Set<PatternElement<?>> elementsToReturn;
+    private final Optional<Graph> sourceGraph;
 
     public PatternGraph(GraphTraversal<?,?> t) {
         elements = new ArrayList<>();
         stepLabelMap = new HashMap<>();
         elementsToReturn = new HashSet<>();
+        sourceGraph = t.asAdmin().getGraph();
         buildGraphFromTraversal(t);
     }
 
@@ -118,34 +122,52 @@ public class PatternGraph {
             Set<PatternElement<?>> elementsToBeSelected = new HashSet<>();
             elementsToBeSelected.add(baseElement);
             // run BFS to find neighbors dependent on this element
-            Queue<PatternElement<?>> elementQueue = new LinkedList<>(baseElement.getNeighbors());
-            while (!elementQueue.isEmpty()) {
-                PatternElement<?> dependentElement = elementQueue.poll();
+            Queue<PatternElement<?>> dependencyQueue = new LinkedList<>(baseElement.getDependentNeighbors());
+            if (baseElement.isEdge()) {
+                // If the base element is an edge and does not have dependent neighbors on both ends,
+                // the open ends should be added to the pattern, too (for joining)
+                for (PatternElement<?> neighbor : baseElement.getNeighbors()) {
+                    if (baseElement.getDependentNeighbors().contains(neighbor)) {continue;}
+                    matchTraversals.add(neighbor.getDependentRetrieval(baseElement).get().asTraversal());
+                    elementsToBeSelected.add(neighbor);
+                }
+            }
+            while (!dependencyQueue.isEmpty()) {
+                PatternElement<?> dependentElement = dependencyQueue.poll();
                 elementsToBeSelected.add(dependentElement);
-                matchTraversals.add(dependentElement.getBestRetrieval().asTraversal());
-                dependentElement.getNeighbors().stream()
-                        .map(PatternElement::getBestRetrieval)
-                        .filter(retrieval -> retrieval instanceof DependentRetrieval)
-                        .map(retrieval -> (DependentRetrieval<?>) retrieval)
-                        .filter(retrieval -> retrieval.getSource() == dependentElement)
-                        .map(DependentRetrieval::getElement)
-                        .forEach(elementQueue::add);
+                matchTraversals.add(dependentElement.getBestDependentRetrieval().get().asTraversal());
+                List<PatternElement<?>> dependentNeighbors = dependentElement.getDependentNeighbors();
+                if (dependentNeighbors.isEmpty() && dependentElement.isEdge()) {
+                    // pattern groups may not end in open edges
+                    // => add their adjacent vertices to the pattern group
+                    for (PatternElement<?> neighbor : dependentElement.getNeighbors()) {
+                        if (elementsToBeSelected.contains(neighbor)) {continue;}
+                        matchTraversals.add(neighbor.getDependentRetrieval(dependentElement).get().asTraversal());
+                        elementsToBeSelected.add(neighbor);
+                    }
+                } else {
+                    dependentNeighbors.forEach(dependencyQueue::add);
+                }
             }
 
+            // assemble Gremlin match traversal
             GraphTraversal<?,?> assembledTraversal = baseElement.getBestRetrieval().asTraversal();
             if (matchTraversals.size() > 0) {
                 assembledTraversal = assembledTraversal.match(matchTraversals.toArray(new GraphTraversal[0]));
             }
-            joinedTraversals.add(GremlinWriter.applySelectStep(assembledTraversal, elementsToBeSelected));
+            joinedTraversals.add(GremlinWriter.applySelectStep(assembledTraversal, elementsToBeSelected, true));
         }
 
         Iterator<GraphTraversal<?,Map<String,Object>>> joinedTraversalIterator = joinedTraversals.iterator();
         assert joinedTraversalIterator.hasNext();
         GraphTraversal<?,?> completeTraversal = joinedTraversalIterator.next();
+        if (sourceGraph.isPresent()) {
+            completeTraversal.asAdmin().setGraph(sourceGraph.get());
+        }
         while (joinedTraversalIterator.hasNext()) {
             completeTraversal.asAdmin().addStep(new JoinStep(completeTraversal.asAdmin(), joinedTraversalIterator.next()));
         }
-        return GremlinWriter.applySelectStep(completeTraversal, elementsToReturn);
+        return GremlinWriter.applySelectStep(completeTraversal, elementsToReturn, false);
     }
 
     public List<PatternVertex> getVertices() {

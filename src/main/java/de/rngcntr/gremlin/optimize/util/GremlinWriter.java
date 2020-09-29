@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.Map;
 
 public class GremlinWriter {
-    public static GraphTraversal<?, Map<String, Object>> applySelectStep(GraphTraversal<?,?> t, Collection<PatternElement<?>> elements) {
+    public static GraphTraversal<?, Map<String, Object>> applySelectStep(GraphTraversal<?,?> t, Collection<PatternElement<?>> elements, boolean alwaysMap) {
         String[] labelArray = elements.stream()
                 .map(PatternElement::getId)
                 .map(String::valueOf)
@@ -15,7 +15,7 @@ public class GremlinWriter {
         if (labelArray.length == 0) {
             return t.select(""); // TODO undefined behavior
         } else if (labelArray.length == 1) {
-            return t.select(labelArray[0]);
+            return alwaysMap ? t.select(labelArray[0], labelArray[0]) : t.select(labelArray[0]);
         } else {
             String[] remainingLabelArray = new String[labelArray.length - 2];
             System.arraycopy(labelArray, 2, remainingLabelArray, 0, remainingLabelArray.length);
