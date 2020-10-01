@@ -3,7 +3,6 @@ package de.rngcntr.gremlin.optimize.retrieval;
 import de.rngcntr.gremlin.optimize.filter.PropertyFilter;
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
 import de.rngcntr.gremlin.optimize.structure.PatternElement;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.DefaultGraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
@@ -24,7 +23,7 @@ public abstract class Retrieval<E extends Element> implements Comparable<Retriev
     protected abstract GraphTraversal<?,E> getBaseTraversal();
 
     public GraphTraversal<?,E> asTraversal() {
-        GraphTraversal t = getBaseTraversal();
+        GraphTraversal<?,E> t = getBaseTraversal();
 
         if (element.hasLabelFilter()) {
             element.getLabelFilter().applyTo(t);

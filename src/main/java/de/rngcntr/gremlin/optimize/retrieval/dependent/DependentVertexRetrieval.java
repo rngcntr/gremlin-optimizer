@@ -1,6 +1,5 @@
 package de.rngcntr.gremlin.optimize.retrieval.dependent;
 
-import de.rngcntr.gremlin.optimize.filter.PropertyFilter;
 import de.rngcntr.gremlin.optimize.structure.PatternEdge;
 import de.rngcntr.gremlin.optimize.structure.PatternVertex;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.DefaultGraphTraversal;

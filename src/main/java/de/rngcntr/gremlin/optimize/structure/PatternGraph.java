@@ -20,13 +20,13 @@ public class PatternGraph {
     private final List<PatternElement<?>> elements;
     private final Map<String, PatternElement<?>> stepLabelMap;
     private final Map<PatternElement<?>, String> elementsToReturn;
-    private final Optional<Graph> sourceGraph;
+    private final Graph sourceGraph;
 
     public PatternGraph(GraphTraversal<?,?> t) {
         elements = new ArrayList<>();
         stepLabelMap = new HashMap<>();
         elementsToReturn = new HashMap<>();
-        sourceGraph = t.asAdmin().getGraph();
+        sourceGraph = t.asAdmin().getGraph().orElse(null);
         buildGraphFromTraversal(t);
     }
 
@@ -126,6 +126,7 @@ public class PatternGraph {
                 // the open ends should be added to the pattern, too (for joining)
                 for (PatternElement<?> neighbor : baseElement.getNeighbors()) {
                     if (baseElement.getDependentNeighbors().contains(neighbor)) {continue;}
+                    assert neighbor.getDependentRetrieval(baseElement).isPresent();
                     matchTraversals.add(neighbor.getDependentRetrieval(baseElement).get().asTraversal());
                     elementsToBeSelected.add(neighbor);
                 }
@@ -133,6 +134,7 @@ public class PatternGraph {
             while (!dependencyQueue.isEmpty()) {
                 PatternElement<?> dependentElement = dependencyQueue.poll();
                 elementsToBeSelected.add(dependentElement);
+                assert dependentElement.getBestDependentRetrieval().isPresent();
                 matchTraversals.add(dependentElement.getBestDependentRetrieval().get().asTraversal());
                 List<PatternElement<?>> dependentNeighbors = dependentElement.getDependentNeighbors();
                 if (dependentNeighbors.isEmpty() && dependentElement.isEdge()) {
@@ -140,11 +142,12 @@ public class PatternGraph {
                     // => add their adjacent vertices to the pattern group
                     for (PatternElement<?> neighbor : dependentElement.getNeighbors()) {
                         if (elementsToBeSelected.contains(neighbor)) {continue;}
+                        assert neighbor.getDependentRetrieval(dependentElement).isPresent();
                         matchTraversals.add(neighbor.getDependentRetrieval(dependentElement).get().asTraversal());
                         elementsToBeSelected.add(neighbor);
                     }
                 } else {
-                    dependentNeighbors.forEach(dependencyQueue::add);
+                    dependencyQueue.addAll(dependentNeighbors);
                 }
             }
 
@@ -159,9 +162,7 @@ public class PatternGraph {
         Iterator<GraphTraversal<?,Map<String,Object>>> joinedTraversalIterator = joinedTraversals.iterator();
         assert joinedTraversalIterator.hasNext();
         GraphTraversal<?,?> completeTraversal = joinedTraversalIterator.next();
-        if (sourceGraph.isPresent()) {
-            completeTraversal.asAdmin().setGraph(sourceGraph.get());
-        }
+        completeTraversal.asAdmin().setGraph(sourceGraph);
         while (joinedTraversalIterator.hasNext()) {
             completeTraversal.asAdmin().addStep(new JoinStep(completeTraversal.asAdmin(), joinedTraversalIterator.next()));
         }

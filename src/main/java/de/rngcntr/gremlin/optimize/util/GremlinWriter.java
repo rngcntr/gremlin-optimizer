@@ -1,7 +1,6 @@
 package de.rngcntr.gremlin.optimize.util;
 
 import de.rngcntr.gremlin.optimize.structure.PatternElement;
-import de.rngcntr.gremlin.optimize.structure.PatternGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
 

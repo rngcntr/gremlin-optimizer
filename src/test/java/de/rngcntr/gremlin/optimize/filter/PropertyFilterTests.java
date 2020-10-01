@@ -16,7 +16,7 @@ public class PropertyFilterTests {
     @ParameterizedTest
     @CsvSource({
             "testKey0, 0",
-            "testkey1, 1"
+            "testKey1, 1"
     })
     public void testConstructor(String key, int value) {
         P<?> p = P.eq(value);

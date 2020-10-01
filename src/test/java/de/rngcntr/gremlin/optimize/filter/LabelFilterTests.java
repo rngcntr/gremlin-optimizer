@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,7 +27,7 @@ public class LabelFilterTests {
     @Test
     public void testEmptyConstructor() {
         LabelFilter<?> filter = LabelFilter.empty(Vertex.class);
-        assertEquals(null, filter.getLabel());
+        assertNull(filter.getLabel());
     }
 
     @ParameterizedTest
