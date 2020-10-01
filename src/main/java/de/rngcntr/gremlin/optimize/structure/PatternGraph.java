@@ -1,6 +1,5 @@
 package de.rngcntr.gremlin.optimize.structure;
 
-import de.rngcntr.gremlin.optimize.retrieval.dependent.DependentRetrieval;
 import de.rngcntr.gremlin.optimize.retrieval.direct.DirectRetrieval;
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
 import de.rngcntr.gremlin.optimize.step.JoinStep;
@@ -12,7 +11,6 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.Scoping;
 import org.apache.tinkerpop.gremlin.process.traversal.step.filter.HasStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.*;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.EmptyStep;
-import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
 import java.util.*;
@@ -21,13 +19,13 @@ import java.util.stream.Collectors;
 public class PatternGraph {
     private final List<PatternElement<?>> elements;
     private final Map<String, PatternElement<?>> stepLabelMap;
-    private final Set<PatternElement<?>> elementsToReturn;
+    private final Map<PatternElement<?>, String> elementsToReturn;
     private final Optional<Graph> sourceGraph;
 
     public PatternGraph(GraphTraversal<?,?> t) {
         elements = new ArrayList<>();
         stepLabelMap = new HashMap<>();
-        elementsToReturn = new HashSet<>();
+        elementsToReturn = new HashMap<>();
         sourceGraph = t.asAdmin().getGraph();
         buildGraphFromTraversal(t);
     }
@@ -61,7 +59,7 @@ public class PatternGraph {
                 selectedLabels.forEach(l -> {
                     PatternElement<?> elem = stepLabelMap.get(l);
                     if (elem == null) throw new IllegalArgumentException("Step label " + l + " is undefined");
-                    elementsToReturn.add(elem);
+                    elementsToReturn.put(elem, l);
                 });
             } else {
                 throw new IllegalArgumentException("Unsupported step: " + currentStep);
@@ -75,7 +73,7 @@ public class PatternGraph {
         assert currentElement != null;
         if (elementsToReturn.isEmpty()) {
             // if no select step was parsed, return the last element
-            elementsToReturn.add(currentElement);
+            elementsToReturn.put(currentElement, String.valueOf(currentElement.id));
         }
     }
 
@@ -155,7 +153,7 @@ public class PatternGraph {
             if (matchTraversals.size() > 0) {
                 assembledTraversal = assembledTraversal.match(matchTraversals.toArray(new GraphTraversal[0]));
             }
-            joinedTraversals.add(GremlinWriter.applySelectStep(assembledTraversal, elementsToBeSelected, true));
+            joinedTraversals.add(GremlinWriter.selectElements(assembledTraversal, elementsToBeSelected, true));
         }
 
         Iterator<GraphTraversal<?,Map<String,Object>>> joinedTraversalIterator = joinedTraversals.iterator();
@@ -167,7 +165,7 @@ public class PatternGraph {
         while (joinedTraversalIterator.hasNext()) {
             completeTraversal.asAdmin().addStep(new JoinStep(completeTraversal.asAdmin(), joinedTraversalIterator.next()));
         }
-        return GremlinWriter.applySelectStep(completeTraversal, elementsToReturn, false);
+        return GremlinWriter.selectLabels(completeTraversal, elementsToReturn);
     }
 
     public List<PatternVertex> getVertices() {
