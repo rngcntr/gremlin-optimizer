@@ -32,9 +32,17 @@ public class PatternGraph {
 
     private void buildGraphFromTraversal(GraphTraversal<?,?> t) {
         PatternElement<?> currentElement = null;
-        for (Step<?, ?> currentStep = t.asAdmin().getStartStep();
-             currentStep != EmptyStep.instance();
-             currentStep = currentStep.getNextStep()) {
+
+        // in nested traversals, each layer has a current parsing position
+        Stack<Step<?,?>> currentStepStack = new Stack<>();
+        currentStepStack.push(t.asAdmin().getStartStep());
+
+        while (!currentStepStack.isEmpty()) {
+            Step<?,?> currentStep = currentStepStack.pop();
+            Step<?,?> nextStep = currentStep.getNextStep();
+            if (nextStep != EmptyStep.instance()) {
+                currentStepStack.push(nextStep);
+            }
 
             if (currentStep instanceof GraphStep<?,?>) {
                 currentElement = GremlinParser.parseGraphStep((GraphStep<?, ?>) currentStep);
@@ -77,6 +85,11 @@ public class PatternGraph {
         }
     }
 
+    /**
+     * Builds a traversal based on the pattern graph.
+     * @param stats
+     * @return
+     */
     public GraphTraversal<?,?> optimize(StatisticsProvider stats) {
         // 1st step: initialization of the graph and estimation of direct retrievals
         elements.forEach(PatternElement::initializeRetrievals);

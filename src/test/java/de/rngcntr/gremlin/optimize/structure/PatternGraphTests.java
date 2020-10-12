@@ -3,6 +3,7 @@ package de.rngcntr.gremlin.optimize.structure;
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -119,5 +120,15 @@ public class PatternGraphTests {
         when(stats.withLabel(any())).thenReturn(2L);
         pg.optimize(stats);
         // TODO execute actual test
+    }
+
+    @Test
+    public void testExampleFromAnimation() {
+        GraphTraversal<?,?> t = g.V()
+                .hasLabel("store")
+                .where(__.out("belongs_to").has("name", "Apple"))
+                .where(__.in("buys_at").has("name", "Bob"))
+                .out("located_in");
+        PatternGraph pg = new PatternGraph(t);
     }
 }
