@@ -6,9 +6,11 @@ import de.rngcntr.gremlin.optimize.structure.PatternEdge;
 import de.rngcntr.gremlin.optimize.structure.PatternElement;
 import de.rngcntr.gremlin.optimize.structure.PatternVertex;
 import org.apache.tinkerpop.gremlin.process.traversal.Step;
+import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.step.Scoping;
 import org.apache.tinkerpop.gremlin.process.traversal.step.filter.HasStep;
+import org.apache.tinkerpop.gremlin.process.traversal.step.filter.TraversalFilterStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.*;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.EmptyStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
@@ -58,6 +60,11 @@ public class GremlinParser {
     }
 
     public Step<?,?> advance() {
+        if (currentStepStack.size() < currentElementStack.size()) {
+            // an inner traversal has ended, remove it's current element pointer
+            currentElementStack.pop();
+        }
+
         Step<?,?> currentStep = currentStepStack.pop();
         Step<?,?> nextStep = currentStep.getNextStep();
         if (nextStep != EmptyStep.instance()) {
@@ -86,6 +93,8 @@ public class GremlinParser {
             parseVertexStep((VertexStep<?>) currentStep);
         } else if (currentStep instanceof EdgeVertexStep) {
             parseEdgeStep((EdgeVertexStep) currentStep);
+        } else if (currentStep instanceof TraversalFilterStep) {
+            parseWhereStep((TraversalFilterStep) currentStep);
         } else if (currentStep instanceof SelectStep || currentStep instanceof SelectOneStep) {
             if (currentStep.getNextStep() != EmptyStep.instance()) {
                 // TODO currently, only select steps at the end of the query are supported
@@ -205,5 +214,13 @@ public class GremlinParser {
 
         elements.add(newVertex);
         currentElementStack.push(newVertex);
+    }
+
+    private void parseWhereStep(TraversalFilterStep filterStep) {
+        final List<Traversal.Admin<?,?>> localChildren = filterStep.getLocalChildren();
+        assert localChildren.size() == 1 : "Where steps with multiple local children are currently not supported.";
+
+        currentStepStack.push(localChildren.get(0).getStartStep());
+        currentElementStack.push(currentElementStack.peek());
     }
 }

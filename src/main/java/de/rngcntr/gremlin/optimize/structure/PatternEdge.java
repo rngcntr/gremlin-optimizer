@@ -43,10 +43,10 @@ public class PatternEdge extends PatternElement<Edge> {
     public Collection<DependentRetrieval<Edge>> generateDependentRetrievals() {
         ArrayList<DependentRetrieval<Edge>> retrievals = new ArrayList<>();
         if (start != null) {
-            retrievals.add(new DependentEdgeRetrieval(Edge.class, this, start, Direction.OUT));
+            retrievals.add(new DependentEdgeRetrieval(Edge.class, this, start, Direction.IN));
         }
         if (end != null) {
-            retrievals.add(new DependentEdgeRetrieval(Edge.class, this, end, Direction.IN));
+            retrievals.add(new DependentEdgeRetrieval(Edge.class, this, end, Direction.OUT));
         }
         return retrievals;
     }

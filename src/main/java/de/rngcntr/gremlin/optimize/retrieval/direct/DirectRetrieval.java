@@ -12,13 +12,21 @@ public abstract class DirectRetrieval<E extends Element>  extends Retrieval<E> {
     @Override
     public void estimate(StatisticsProvider stats) {
         // if filters are available, use the most selective
-        Long estimateByProperties = element.getPropertyFilters().stream()
-                .map(f -> f.estimateSelectivity(stats))
-                .min(Long::compareTo)
-                .orElse(stats.totals(retrievedType));
-        long estimateByLabel = element.hasLabelFilter()
-                ? element.getLabelFilter().estimateSelectivity(stats)
-                : IMPOSSIBLE;
-        this.estimatedSize = Math.min(estimateByProperties, estimateByLabel);
+        if (!element.hasLabelFilter()) {
+            this.estimatedSize = stats.totals(retrievedType);
+        } else {
+            Long estimateByProperties = element.getPropertyFilters().stream()
+                    .map(f -> stats.withProperty(element.getLabelFilter(), f))
+                    .min(Long::compareTo)
+                    .orElse(IMPOSSIBLE);
+            long estimateByLabel = stats.withLabel(element.getLabelFilter());
+            this.estimatedSize = Math.min(estimateByProperties, estimateByLabel);
+        }
+
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Direct, Estimation: ~%d", estimatedSize);
     }
 }

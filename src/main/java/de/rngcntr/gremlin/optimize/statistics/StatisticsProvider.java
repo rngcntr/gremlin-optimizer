@@ -35,12 +35,13 @@ public interface StatisticsProvider {
     /**
      * Returns the total amount (or an estimation) of the specified element having a given property in the entire graph.
      *
-     * @param property The specification of the elements property.
+     * @param property The specification of the element's label.
+     * @param property The specification of the element's property.
      * @param <E> Either {@link org.apache.tinkerpop.gremlin.structure.Vertex} or
      *            {@link org.apache.tinkerpop.gremlin.structure.Edge}.
      * @return The number of matching elements.
      */
-    <E extends Element> long withProperty(PropertyFilter<E> property);
+    <E extends Element> long withProperty(LabelFilter<E> label, PropertyFilter<E> property);
 
     /**
      * Returns the total amount (or an estimation) of the number of connections between two elements with the given

@@ -23,7 +23,7 @@ public abstract class DependentRetrieval<E extends Element>  extends Retrieval<E
 
     @Override
     public void estimate(StatisticsProvider stats) {
-        if (!source.isFinal()) {
+        if (isSelfDependent()) {
             estimatedSize = IMPOSSIBLE;
             return;
         }
@@ -37,25 +37,53 @@ public abstract class DependentRetrieval<E extends Element>  extends Retrieval<E
         if (element.hasLabelFilter()) {
             if (source.hasLabelFilter()) {
                 // calculate #{eLabel -> vLabel} / #{eLabel}
-                labelSelectivity = (double) stats.connections(source.getLabelFilter(), element.getLabelFilter())
-                        / stats.withLabel(source.getLabelFilter());
+                long absoluteConnections = direction == Direction.OUT
+                        ? stats.connections(element.getLabelFilter(), source.getLabelFilter())
+                        : stats.connections(source.getLabelFilter(), element.getLabelFilter());
+                labelSelectivity = (double) absoluteConnections / stats.withLabel(source.getLabelFilter());
             } else {
                 // calculate #{e* -> vLabel} / #{e*}
-                labelSelectivity = (double) stats.connections(LabelFilter.empty(source.getType()), element.getLabelFilter())
-                        / stats.totals(source.getType());
+                long absoluteConnections = direction == Direction.OUT
+                        ? stats.connections(element.getLabelFilter(), LabelFilter.empty(source.getType()))
+                        : stats.connections(LabelFilter.empty(source.getType()), element.getLabelFilter());
+                labelSelectivity = (double) absoluteConnections / stats.totals(source.getType());
             }
         }
 
         /*
             determine selectivity of property filter
          */
-        long total = stats.totals(retrievedType);
-        Optional<Long> totalFiltered = element.getPropertyFilters().stream().map(f -> f.estimateSelectivity(stats)).min(Long::compareTo);
-        double filterSelectivity = (double) totalFiltered.orElse(stats.totals(retrievedType)) / total;
+
+        double filterSelectivity = 1.0;
+        if (element.hasLabelFilter()) {
+            long total = stats.withLabel(element.getLabelFilter());
+            Optional<Long> totalFiltered = element.getPropertyFilters().stream()
+                    .map(f -> stats.withProperty(element.getLabelFilter(), f))
+                    .min(Long::compareTo);
+            filterSelectivity = (double) totalFiltered.orElse(total) / total;
+        }
 
         /*
             combine to estimation
          */
         estimatedSize = (long) (incomingSize * labelSelectivity * filterSelectivity);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("via %d, Estimation: ~%d", source.getId(), estimatedSize);
+    }
+
+    private boolean isSelfDependent() {
+        Retrieval<?> r = this;
+        while (r instanceof DependentRetrieval) {
+            PatternElement<?> source = ((DependentRetrieval<?>) r).getSource();
+            if (element.equals(source)) {
+                return true;
+            }
+            r = source.getBestRetrieval();
+        }
+
+        return false;
     }
 }

@@ -1,5 +1,6 @@
 package de.rngcntr.gremlin.optimize.structure;
 
+import de.rngcntr.gremlin.optimize.statistics.MockedStatUtils;
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -14,8 +15,7 @@ import static de.rngcntr.gremlin.optimize.structure.PatternElementAssert.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class PatternGraphTests {
 
@@ -115,8 +115,8 @@ public class PatternGraphTests {
         GraphTraversal<?,?> t = g.V().outE("knows");
         PatternGraph pg = new PatternGraph(t);
         StatisticsProvider stats = mock(StatisticsProvider.class);
-        when(stats.totals(Vertex.class)).thenReturn(1L);
-        when(stats.totals(Edge.class)).thenReturn(3L);
+        MockedStatUtils.withTotalEstimation(stats, Vertex.class, 1L);
+        MockedStatUtils.withTotalEstimation(stats, Edge.class, 3L);
         when(stats.withLabel(any())).thenReturn(2L);
         pg.optimize(stats);
         // TODO execute actual test
@@ -126,9 +126,31 @@ public class PatternGraphTests {
     public void testExampleFromAnimation() {
         GraphTraversal<?,?> t = g.V()
                 .hasLabel("store")
-                .where(__.out("belongs_to").has("name", "Apple"))
-                .where(__.in("buys_at").has("name", "Bob"))
-                .out("located_in");
+                .where(__.out("belongs_to").hasLabel("company").has("name", "Apple"))
+                .where(__.in("buys_at").hasLabel("customer").has("name", "Bob"))
+                .out("located_in").hasLabel("country");
         PatternGraph pg = new PatternGraph(t);
+
+        StatisticsProvider stats = mock(StatisticsProvider.class);
+        MockedStatUtils.withTotalEstimation(stats, Vertex.class, 111_200L);
+        MockedStatUtils.withTotalEstimation(stats, Edge.class, 2_020_000L);
+        MockedStatUtils.withLabelEstimation(stats, "store", 10_000L);
+        MockedStatUtils.withLabelEstimation(stats, "country", 200L);
+        MockedStatUtils.withLabelEstimation(stats, "customer", 100_000L);
+        MockedStatUtils.withLabelEstimation(stats, "company", 1_000L);
+        MockedStatUtils.withLabelEstimation(stats, "located_in", 10_000L);
+        MockedStatUtils.withLabelEstimation(stats, "buys_at", 2_000_000L);
+        MockedStatUtils.withLabelEstimation(stats, "belongs_to", 10_000L);
+        MockedStatUtils.withPropertyEstimation(stats, "customer", "name", 100L);
+        MockedStatUtils.withPropertyEstimation(stats, "company", "name", 1L);
+        MockedStatUtils.withConnectivityEstimation(stats, "located_in", "country", 10_000L);
+        MockedStatUtils.withConnectivityEstimation(stats, "store", "located_in", 10_000L);
+        MockedStatUtils.withConnectivityEstimation(stats, "belongs_to", "company", 10_000L);
+        MockedStatUtils.withConnectivityEstimation(stats, "store", "belongs_to", 10_000L);
+        MockedStatUtils.withConnectivityEstimation(stats, "buys_at", "store", 2_000_000L);
+        MockedStatUtils.withConnectivityEstimation(stats, "customer", "buys_at", 2_000_000L);
+
+        GraphTraversal<?,?> result = pg.optimize(stats);
+        System.out.println(result);
     }
 }

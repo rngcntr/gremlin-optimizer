@@ -33,18 +33,4 @@ public class PropertyFilterTests {
         assertEquals(Edge.class, edgeFilter.getFilteredType());
 
     }
-
-    @ParameterizedTest
-    @CsvSource({
-            "testKey0, 5",
-            "testKey0, 7",
-            "testKey1, 5"
-    })
-    public void testSelectivityEstimation(String testKey, long testAmount) {
-        StatisticsProvider statMock = mock(StatisticsProvider.class);
-        PropertyFilter<?> filter = new PropertyFilter<>(Vertex.class, testKey, P.eq(0));
-        when(statMock.withProperty(filter)).thenReturn(testAmount);
-
-        assertEquals(testAmount, filter.estimateSelectivity(statMock));
-    }
 }

@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 public abstract class PatternElement<E extends Element> implements Comparable<PatternElement<?>> {
     private final Class<E> type;
-    protected boolean isFinal;
     protected LabelFilter<E> labelFilter;
     protected Collection<PropertyFilter<E>> propertyFilters;
     protected List<Retrieval<E>> retrievals;
@@ -23,7 +22,6 @@ public abstract class PatternElement<E extends Element> implements Comparable<Pa
 
     public PatternElement(Class<E> type) {
         this.type = type;
-        this.isFinal = false;
         this.labelFilter = null;
         this.propertyFilters = new ArrayList<>();
         this.retrievals = new ArrayList<>();
@@ -75,14 +73,6 @@ public abstract class PatternElement<E extends Element> implements Comparable<Pa
 
     public abstract Collection<DependentRetrieval<E>> generateDependentRetrievals();
 
-    public void makeFinal() {
-        this.isFinal = true;
-    }
-
-    public boolean isFinal() {
-        return isFinal;
-    }
-
     public abstract List<PatternElement<?>> getNeighbors();
 
     public boolean hasLabelFilter() {
@@ -104,8 +94,12 @@ public abstract class PatternElement<E extends Element> implements Comparable<Pa
     @Override
     public String toString() {
         String labelString = labelFilter == null || labelFilter.getLabel() == null
-                ? "" : String.format(" (%s)", labelFilter);
-        return String.format("[%d] %%s%s\n\tProperties: %s%%s", id, labelString, propertyFilters);
+                ? ""
+                : String.format(" (%s)", labelFilter);
+        String retrievalString = retrievals.size() == 0
+                ? "unknown"
+                : getBestRetrieval().toString();
+        return String.format("[%d] %%s%s\n\tProperties: %s%%s\n\tBest Retrieval: %s", id, labelString, propertyFilters, retrievalString);
     }
 
     @Override

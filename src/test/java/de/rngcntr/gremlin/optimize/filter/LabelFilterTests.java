@@ -29,18 +29,4 @@ public class LabelFilterTests {
         LabelFilter<?> filter = LabelFilter.empty(Vertex.class);
         assertNull(filter.getLabel());
     }
-
-    @ParameterizedTest
-    @CsvSource({
-            "testLabel0, 5",
-            "testLabel0, 7",
-            "testLabel1, 5"
-    })
-    public void testSelectivityEstimation(String testLabel, long testAmount) {
-        StatisticsProvider statMock = mock(StatisticsProvider.class);
-        LabelFilter<?> filter = new LabelFilter<>(Vertex.class, testLabel);
-        when(statMock.withLabel(filter)).thenReturn(testAmount);
-
-        assertEquals(testAmount, filter.estimateSelectivity(statMock));
-    }
 }

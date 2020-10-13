@@ -34,26 +34,23 @@ public class PatternGraph {
         elements.forEach(PatternElement::initializeRetrievals);
         elements.forEach(e -> e.estimateDirectRetrievals(stats));
 
-        // 2nd step: mark most selective PatternElement as final
-        ArrayList<PatternElement<?>> leftElements = new ArrayList<>(elements);
-        PatternElement<?> mostSelective = Collections.min(leftElements);
-        leftElements.remove(mostSelective);
-        mostSelective.makeFinal();
+        Set<PatternElement<?>> updateRequired = new HashSet<>(elements);
+        PatternElement<?> startingPoint = Collections.min(updateRequired);
+        updateRequired.remove(startingPoint);
 
         // n-th step
-        while (!leftElements.isEmpty()) {
-            Collection<PatternElement<?>> neighbors = mostSelective.getNeighbors();
-            neighbors.removeIf(PatternElement::isFinal);
-            neighbors.forEach(e -> e.estimateDependentRetrievals(stats));
-            mostSelective = Collections.min(neighbors);
-            leftElements.remove(mostSelective);
-            mostSelective.makeFinal();
+        while (!updateRequired.isEmpty()) {
+            PatternElement<?> elementToUpdate = updateRequired.iterator().next();
+            updateRequired.remove(elementToUpdate);
+            long sizeBeforeUpdate = elementToUpdate.getBestRetrieval().getEstimatedSize();
+            elementToUpdate.estimateDependentRetrievals(stats);
+            long sizeAfterUpdate = elementToUpdate.getBestRetrieval().getEstimatedSize();
+
+            if (sizeAfterUpdate < sizeBeforeUpdate) {
+                updateRequired.addAll(elementToUpdate.getNeighbors());
+            }
         }
 
-        return buildTraversal();
-    }
-
-    private GraphTraversal<?,?> buildTraversal() {
         return GremlinWriter.buildTraversal(this);
     }
 

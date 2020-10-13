@@ -59,7 +59,7 @@ public class GraphStatistics implements StatisticsProvider {
     }
 
     @Override
-    public <E extends Element> long withProperty(PropertyFilter<E> filter) {
+    public <E extends Element> long withProperty(LabelFilter<E> label, PropertyFilter<E> property) {
         throw new UnsupportedOperationException();
     }
 

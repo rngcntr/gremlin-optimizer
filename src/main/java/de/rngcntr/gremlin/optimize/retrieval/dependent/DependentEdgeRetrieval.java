@@ -20,7 +20,7 @@ public class DependentEdgeRetrieval extends DependentRetrieval<Edge> {
     protected GraphTraversal<?, Edge> getBaseTraversal() {
         GraphTraversal.Admin<?, Edge> t = new DefaultGraphTraversal<>();
         t = t.as(String.valueOf(source.getId())).asAdmin();
-        t.addStep(new VertexStep<>(t, Edge.class, direction));
+        t.addStep(new VertexStep<>(t, Edge.class, direction.opposite()));
         return t;
     }
 }
