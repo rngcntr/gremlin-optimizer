@@ -1,5 +1,6 @@
 package de.rngcntr.gremlin.optimize.filter;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
@@ -12,6 +13,15 @@ public class PropertyFilter<E extends Element> extends ElementFilter<E> {
         super(filteredType);
         this.key = key;
         this.predicate = predicate;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof PropertyFilter)) return false;
+        PropertyFilter<?> otherFilter = (PropertyFilter<?>) other;
+        if (!StringUtils.equals(key, otherFilter.key)) return false;
+        if (predicate == null) return otherFilter.predicate == null;
+        return predicate.equals(((PropertyFilter<?>) other).predicate);
     }
 
     @Override

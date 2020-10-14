@@ -1,20 +1,18 @@
 package de.rngcntr.gremlin.optimize.structure;
 
-import de.rngcntr.gremlin.optimize.statistics.MockedStatUtils;
-import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
-import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static de.rngcntr.gremlin.optimize.structure.PatternElementAssert.*;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class PatternGraphTests {
@@ -111,46 +109,52 @@ public class PatternGraphTests {
     }
 
     @Test
-    public void testGenerateTraversal() {
-        GraphTraversal<?,?> t = g.V().outE("knows");
-        PatternGraph pg = new PatternGraph(t);
-        StatisticsProvider stats = mock(StatisticsProvider.class);
-        MockedStatUtils.withTotalEstimation(stats, Vertex.class, 1L);
-        MockedStatUtils.withTotalEstimation(stats, Edge.class, 3L);
-        when(stats.withLabel(any())).thenReturn(2L);
-        pg.optimize(stats);
-        // TODO execute actual test
+    public void testWhereStepDoesNotInfluenceReturnedElement() {
+        PatternGraph pg = new PatternGraph(g.V().where(__.inE("knows")));
+        assertEquals(1, pg.getElementsToReturn().keySet().size());
+        assertEquals(Vertex.class, pg.getElementsToReturn().keySet().iterator().next().getType());
     }
 
     @Test
     public void testExampleFromAnimation() {
-        GraphTraversal<?,?> t = g.V()
+        PatternGraph basePattern = new PatternGraph(g.V()
                 .hasLabel("store")
                 .where(__.out("belongs_to").hasLabel("company").has("name", "Apple"))
                 .where(__.in("buys_at").hasLabel("customer").has("name", "Bob"))
-                .out("located_in").hasLabel("country");
-        PatternGraph pg = new PatternGraph(t);
+                .out("located_in").hasLabel("country"));
 
-        StatisticsProvider stats = mock(StatisticsProvider.class);
-        MockedStatUtils.withTotalEstimation(stats, Vertex.class, 111_200L);
-        MockedStatUtils.withTotalEstimation(stats, Edge.class, 2_020_000L);
-        MockedStatUtils.withLabelEstimation(stats, "store", 10_000L);
-        MockedStatUtils.withLabelEstimation(stats, "country", 200L);
-        MockedStatUtils.withLabelEstimation(stats, "customer", 100_000L);
-        MockedStatUtils.withLabelEstimation(stats, "company", 1_000L);
-        MockedStatUtils.withLabelEstimation(stats, "located_in", 10_000L);
-        MockedStatUtils.withLabelEstimation(stats, "buys_at", 2_000_000L);
-        MockedStatUtils.withLabelEstimation(stats, "belongs_to", 10_000L);
-        MockedStatUtils.withPropertyEstimation(stats, "customer", "name", 100L);
-        MockedStatUtils.withPropertyEstimation(stats, "company", "name", 1L);
-        MockedStatUtils.withConnectivityEstimation(stats, "located_in", "country", 10_000L);
-        MockedStatUtils.withConnectivityEstimation(stats, "store", "located_in", 10_000L);
-        MockedStatUtils.withConnectivityEstimation(stats, "belongs_to", "company", 10_000L);
-        MockedStatUtils.withConnectivityEstimation(stats, "store", "belongs_to", 10_000L);
-        MockedStatUtils.withConnectivityEstimation(stats, "buys_at", "store", 2_000_000L);
-        MockedStatUtils.withConnectivityEstimation(stats, "customer", "buys_at", 2_000_000L);
+        List<PatternGraph> otherPatterns = new ArrayList<>();
+        otherPatterns.add(new PatternGraph(g.V()
+                .hasLabel("store")
+                .where(__.in("buys_at").hasLabel("customer").has("name", "Bob"))
+                .where(__.out("belongs_to").hasLabel("company").has("name", "Apple"))
+                .out("located_in").hasLabel("country")));
+        otherPatterns.add(new PatternGraph(g.V()
+                .hasLabel("customer")
+                .has("name", "Bob")
+                .out("buys_at")
+                .hasLabel("store")
+                .where(__.out("belongs_to").hasLabel("company").has("name", "Apple"))
+                .out("located_in").hasLabel("country")));
+        otherPatterns.add(new PatternGraph(g.V()
+                .hasLabel("company")
+                .has("name", "Apple")
+                .in("belongs_to")
+                .hasLabel("store")
+                .where(__.in("buys_at").hasLabel("customer").has("name", "Bob"))
+                .out("located_in").hasLabel("country")));
+        otherPatterns.add(new PatternGraph(g.V()
+                .hasLabel("country")
+                .as("returnValue")
+                .in("located_in")
+                .hasLabel("store")
+                .where(__.in("buys_at").hasLabel("customer").has("name", "Bob"))
+                .where(__.out("belongs_to").hasLabel("company").has("name", "Apple"))
+                .select("returnValue")
+        ));
 
-        GraphTraversal<?,?> result = pg.optimize(stats);
-        System.out.println(result);
+        for (PatternGraph otherPattern : otherPatterns) {
+            assertEquals(basePattern, otherPattern);
+        }
     }
 }

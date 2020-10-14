@@ -45,30 +45,27 @@ public class GremlinParser {
             Step<?,?> currentStep = advance();
             parseStep(currentStep);
         }
-
-        assert !currentElementStack.isEmpty();
-        PatternElement<?> lastElement = currentElementStack.pop();
-        assert lastElement != null;
-        if (elementsToReturn.isEmpty()) {
-            // if no select step was parsed, return the last element
-            elementsToReturn.put(lastElement, String.valueOf(lastElement.getId()));
-        }
     }
 
-    public boolean finished() {
+    private boolean finished() {
         return currentStepStack.isEmpty();
     }
 
-    public Step<?,?> advance() {
-        if (currentStepStack.size() < currentElementStack.size()) {
-            // an inner traversal has ended, remove it's current element pointer
-            currentElementStack.pop();
-        }
-
+    private Step<?,?> advance() {
         Step<?,?> currentStep = currentStepStack.pop();
-        Step<?,?> nextStep = currentStep.getNextStep();
-        if (nextStep != EmptyStep.instance()) {
-            currentStepStack.push(nextStep);
+
+        if (currentStep instanceof EmptyStep) {
+            PatternElement<?> currentElement = currentElementStack.pop();
+            if (currentStepStack.isEmpty()) {
+                // end of traversal
+                assert currentElement != null;
+                if (elementsToReturn.isEmpty()) {
+                    // if no select step was parsed, return the last element
+                    elementsToReturn.put(currentElement, String.valueOf(currentElement.getId()));
+                }
+            }
+        } else {
+            currentStepStack.push(currentStep.getNextStep());
         }
 
         return currentStep;
@@ -82,8 +79,10 @@ public class GremlinParser {
         return elementsToReturn;
     }
 
-    public void parseStep(Step<?,?> currentStep) {
-        if (currentStep instanceof GraphStep<?,?>) {
+    private void parseStep(Step<?,?> currentStep) {
+        if (currentStep instanceof EmptyStep) {
+            return;
+        } else if (currentStep instanceof GraphStep<?,?>) {
             parseGraphStep((GraphStep<?, ?>) currentStep);
         } else if (currentElementStack.peek() == null) {
             throw new IllegalArgumentException("Traversal must start with GraphStep: " + traversal);

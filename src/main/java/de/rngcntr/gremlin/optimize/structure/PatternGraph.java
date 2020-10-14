@@ -3,6 +3,8 @@ package de.rngcntr.gremlin.optimize.structure;
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
 import de.rngcntr.gremlin.optimize.util.GremlinWriter;
 import de.rngcntr.gremlin.optimize.util.GremlinParser;
+import de.rngcntr.gremlin.optimize.util.Permutations;
+import org.apache.commons.lang.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
@@ -78,6 +80,38 @@ public class PatternGraph {
 
     public Graph getSourceGraph() {
         return sourceGraph;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof PatternGraph)) return false;
+        PatternGraph otherGraph = (PatternGraph) other;
+        if (!sourceGraph.equals(otherGraph.sourceGraph)) return false;
+        if (elements.size() != otherGraph.elements.size()) return false;
+        if (elementsToReturn.size() != otherGraph.elementsToReturn.size()) return false;
+
+        Set<Map<PatternElement<?>, PatternElement<?>>> possibleElementMappings = new HashSet<>();
+
+        Permutations.of(otherGraph.elements).forEach(p -> {
+            List<PatternElement<?>> permutation = p.collect(Collectors.toList());
+            Map<PatternElement<?>, PatternElement<?>> elementMapping = new HashMap<>();
+            for (int i = 0; i < elements.size(); ++i) {
+                if (!elements.get(i).equals(permutation.get(i))) return;
+                elementMapping.put(elements.get(i), permutation.get(i));
+            }
+            for (int i = 0; i < elements.size(); ++i) {
+                if (!elements.get(i).isIsomorphicTo(permutation.get(i), elementMapping)) return;
+            }
+            possibleElementMappings.add(elementMapping);
+        });
+
+        mappingLoop: for (Map<PatternElement<?>, PatternElement<?>> elementMapping : possibleElementMappings) {
+            for (PatternElement<?> element : elementsToReturn.keySet()) {
+                if (!otherGraph.elementsToReturn.containsKey(elementMapping.get(element))) {continue mappingLoop;}
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override

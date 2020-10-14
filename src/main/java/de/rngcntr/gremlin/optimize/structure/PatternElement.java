@@ -28,6 +28,17 @@ public abstract class PatternElement<E extends Element> implements Comparable<Pa
         this.id = IdProvider.getInstance().getNextId();
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof PatternElement)) return false;
+        PatternElement<?> otherElement = (PatternElement<?>) other;
+        if (this.type != otherElement.type) return false;
+        if (this.labelFilter == null && otherElement.labelFilter != null) return false;
+        if (this.labelFilter != null && !this.labelFilter.equals(otherElement.labelFilter)) return false;
+        if (propertyFilters.size() != otherElement.propertyFilters.size()) return false;
+        return propertyFilters.containsAll(otherElement.propertyFilters);
+    }
+
     public long getId() {
         return id;
     }
@@ -127,7 +138,13 @@ public abstract class PatternElement<E extends Element> implements Comparable<Pa
         return retrievals.stream()
                 .filter(r -> r instanceof DependentRetrieval)
                 .map(r -> (DependentRetrieval<E>) r)
-                .filter(r -> r.getSource().equals(dependentElement))
+                .filter(r -> r.getSource() == dependentElement)
                 .min(Comparator.comparing(Retrieval::getEstimatedSize));
+    }
+
+    public boolean isIsomorphicTo(PatternElement<?> otherElement, Map<PatternElement<?>, PatternElement<?>> elementMapping) {
+        Set<PatternElement> expectedNeighbors = new HashSet<>();
+        getNeighbors().forEach(n -> expectedNeighbors.add(elementMapping.get(n)));
+        return expectedNeighbors.equals(new HashSet<>(otherElement.getNeighbors()));
     }
 }

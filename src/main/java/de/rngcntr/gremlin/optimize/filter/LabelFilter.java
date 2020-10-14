@@ -1,5 +1,6 @@
 package de.rngcntr.gremlin.optimize.filter;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
@@ -13,6 +14,13 @@ public class LabelFilter<E extends Element> extends ElementFilter<E> {
 
     public static <E1 extends Element> LabelFilter<E1> empty(Class<E1> filteredType) {
         return new LabelFilter<>(filteredType, null);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof LabelFilter)) return false;
+        LabelFilter<?> otherFilter = (LabelFilter<?>) other;
+        return StringUtils.equals(label, otherFilter.label);
     }
 
     @Override
