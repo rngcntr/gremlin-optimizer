@@ -15,9 +15,9 @@
 package de.rngcntr.gremlin.optimize.structure;
 
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
-import de.rngcntr.gremlin.optimize.util.GremlinWriter;
-import de.rngcntr.gremlin.optimize.util.GremlinParser;
-import de.rngcntr.gremlin.optimize.util.Permutations;
+import de.rngcntr.gremlin.optimize.testutil.GremlinWriter;
+import de.rngcntr.gremlin.optimize.testutil.GremlinParser;
+import de.rngcntr.gremlin.optimize.testutil.Permutations;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 

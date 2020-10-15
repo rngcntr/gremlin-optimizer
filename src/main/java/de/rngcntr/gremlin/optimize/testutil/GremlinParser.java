@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package de.rngcntr.gremlin.optimize.util;
+package de.rngcntr.gremlin.optimize.testutil;
 
 import de.rngcntr.gremlin.optimize.filter.LabelFilter;
 import de.rngcntr.gremlin.optimize.filter.PropertyFilter;
