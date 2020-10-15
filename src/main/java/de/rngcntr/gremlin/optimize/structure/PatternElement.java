@@ -157,7 +157,7 @@ public abstract class PatternElement<E extends Element> implements Comparable<Pa
     }
 
     public boolean isIsomorphicTo(PatternElement<?> otherElement, Map<PatternElement<?>, PatternElement<?>> elementMapping) {
-        Set<PatternElement> expectedNeighbors = new HashSet<>();
+        Set<PatternElement<?>> expectedNeighbors = new HashSet<>();
         getNeighbors().forEach(n -> expectedNeighbors.add(elementMapping.get(n)));
         return expectedNeighbors.equals(new HashSet<>(otherElement.getNeighbors()));
     }

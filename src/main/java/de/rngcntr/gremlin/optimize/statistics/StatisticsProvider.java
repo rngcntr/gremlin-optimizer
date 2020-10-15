@@ -19,6 +19,8 @@ import de.rngcntr.gremlin.optimize.filter.PropertyFilter;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
 /**
+ * @author Florian Grieskamp
+ *
  * Graph databases that implement StatisticsProvider can be used to optimize Gremlin queries depending on the
  * distribution of labels and properties on vertices and edges.
  * An instance of StatisticsProvider is necessary to call the
@@ -47,9 +49,10 @@ public interface StatisticsProvider {
     <E extends Element> long withLabel(LabelFilter<E> label);
 
     /**
-     * Returns the total amount (or an estimation) of the specified element having a given property in the entire graph.
+     * Returns the total amount (or an estimation) of the specified element having a given property among all entities
+     * in the graph that have the specified label.
      *
-     * @param property The specification of the element's label.
+     * @param label The specification of the element's label.
      * @param property The specification of the element's property.
      * @param <E> Either {@link org.apache.tinkerpop.gremlin.structure.Vertex} or
      *            {@link org.apache.tinkerpop.gremlin.structure.Edge}.

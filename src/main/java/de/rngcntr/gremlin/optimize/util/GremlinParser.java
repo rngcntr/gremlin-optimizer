@@ -107,7 +107,7 @@ public class GremlinParser {
         } else if (currentStep instanceof EdgeVertexStep) {
             parseEdgeStep((EdgeVertexStep) currentStep);
         } else if (currentStep instanceof TraversalFilterStep) {
-            parseWhereStep((TraversalFilterStep) currentStep);
+            parseWhereStep((TraversalFilterStep<?>) currentStep);
         } else if (currentStep instanceof SelectStep || currentStep instanceof SelectOneStep) {
             if (currentStep.getNextStep() != EmptyStep.instance()) {
                 // TODO currently, only select steps at the end of the query are supported
@@ -229,8 +229,8 @@ public class GremlinParser {
         currentElementStack.push(newVertex);
     }
 
-    private void parseWhereStep(TraversalFilterStep filterStep) {
-        final List<Traversal.Admin<?,?>> localChildren = filterStep.getLocalChildren();
+    private void parseWhereStep(TraversalFilterStep<?> filterStep) {
+        final List<? extends Traversal.Admin<?, ?>> localChildren = filterStep.getLocalChildren();
         assert localChildren.size() == 1 : "Where steps with multiple local children are currently not supported.";
 
         currentStepStack.push(localChildren.get(0).getStartStep());

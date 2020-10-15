@@ -17,16 +17,37 @@ package de.rngcntr.gremlin.optimize.filter;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
+/**
+ * @author Florian Grieskamp
+ *
+ * @param <E> The type of element, that this filter matches on.
+ *            Either {@link org.apache.tinkerpop.gremlin.structure.Vertex} or
+ *            {@link org.apache.tinkerpop.gremlin.structure.Edge}.
+ */
 public abstract class ElementFilter<E extends Element> {
     protected Class<E> filteredType;
 
+    /**
+     * @param filteredType The type of element, that this filter matches on.
+     *            Either {@link org.apache.tinkerpop.gremlin.structure.Vertex} or
+     *            {@link org.apache.tinkerpop.gremlin.structure.Edge}.
+     */
     public ElementFilter(Class<E> filteredType) {
         this.filteredType = filteredType;
     }
 
+    /**
+     * Returns the type of element, that this filter matches on.
+     * @return Either {@link org.apache.tinkerpop.gremlin.structure.Vertex} or
+     *            {@link org.apache.tinkerpop.gremlin.structure.Edge}.
+     */
     public Class<E> getFilteredType() {
         return filteredType;
     }
 
+    /**
+     * Appends a filter step to the traversal, that realizes the behavior specified by this filter.
+     * @param t The traversal to apply the filter on.
+     */
     public abstract void applyTo(GraphTraversal<?,E> t);
 }

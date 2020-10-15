@@ -20,7 +20,7 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 /**
- * @link https://gist.github.com/jaycobbcruz/cbabc1eb49f51bfe2ed1db10a06a2b26
+ * Heavily inspired by <a href="https://gist.github.com/jaycobbcruz/cbabc1eb49f51bfe2ed1db10a06a2b26">jaycobbcruz</a>.
  */
 public class Permutations {
 
