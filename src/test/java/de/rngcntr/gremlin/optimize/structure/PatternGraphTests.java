@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.rngcntr.gremlin.optimize.structure.PatternElementAssert.*;
+import static de.rngcntr.gremlin.optimize.testutils.structure.PatternElementAssert.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 

@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package de.rngcntr.gremlin.optimize.structure;
+package de.rngcntr.gremlin.optimize.testutils.structure;
 
 import de.rngcntr.gremlin.optimize.filter.LabelFilter;
 import de.rngcntr.gremlin.optimize.filter.PropertyFilter;
+import de.rngcntr.gremlin.optimize.structure.PatternElement;
+import de.rngcntr.gremlin.optimize.structure.PatternGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.structure.Element;
 

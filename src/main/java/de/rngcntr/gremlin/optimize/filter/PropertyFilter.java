@@ -19,19 +19,46 @@ import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
+/**
+ * @author Florian Grieskamp
+ *
+ * A property filter specifies a the existence of a property on a pattern element, which matches a given predicate.
+ *
+ * @param <E> The type of element, that this filter matches on.
+ *            Either {@link org.apache.tinkerpop.gremlin.structure.Vertex} or
+ *            {@link org.apache.tinkerpop.gremlin.structure.Edge}.
+ */
 public class PropertyFilter<E extends Element> extends ElementFilter<E> {
     private final String key;
     private final P<?> predicate;
 
+    /**
+     * Creates a property constraint for a pattern element.
+     *
+     * @param filteredType Either {@link org.apache.tinkerpop.gremlin.structure.Vertex} or
+     *            {@link org.apache.tinkerpop.gremlin.structure.Edge}.
+     * @param key The name of the property.
+     * @param predicate The predicate which should be enforced for the property.
+     */
     public PropertyFilter(Class<E> filteredType, String key, P<?> predicate) {
         super(filteredType);
         this.key = key;
         this.predicate = predicate;
     }
 
+    /**
+     * Compares itself with another object for equality.
+     *
+     * @param other The other object.
+     * @return <ul>
+     *     <li><code>true</code>, if the other object is a property filter on an equal key and with an equal predicate</li>
+     *     <li><code>false</code> otherwise.</li>
+     * </ul>
+     */
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof PropertyFilter)) return false;
+        if (getFilteredType() != ((PropertyFilter) other).getFilteredType()) return false;
         PropertyFilter<?> otherFilter = (PropertyFilter<?>) other;
         if (!StringUtils.equals(key, otherFilter.key)) return false;
         if (predicate == null) return otherFilter.predicate == null;
@@ -43,14 +70,29 @@ public class PropertyFilter<E extends Element> extends ElementFilter<E> {
         t.has(key, predicate);
     }
 
+    /**
+     * Gets the key of the property.
+     *
+     * @return The key.
+     */
     public String getKey() {
         return key;
     }
 
+    /**
+     * Gets the predicate of the property.
+     *
+     * @return The predicate.
+     */
     public P<?> getPredicate() {
         return predicate;
     }
 
+    /**
+     * Represents this filter as a human readable text
+     *
+     * @return A Text representation of the filter.
+     */
     @Override
     public String toString() {
         return String.format("%s=%s", key, predicate);

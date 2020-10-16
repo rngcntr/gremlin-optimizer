@@ -20,12 +20,28 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
+/**
+ * @author Florian Grieskamp
+ *
+ * Extends {@link DirectRetrieval} by the specification of a vertex to be retrieved.
+ */
 public class DirectVertexRetrieval extends DirectRetrieval<Vertex> {
-    public DirectVertexRetrieval(Class<Vertex> retrievedType, PatternVertex vertex) {
-        super(retrievedType);
+    /**
+     * Creates a direct vertex retrieval and estimates it as impossible.
+     *
+     * @param vertex The vertex to be retrieved.
+     */
+    public DirectVertexRetrieval(PatternVertex vertex) {
+        super();
         this.element = vertex;
     }
 
+    /**
+     * Creates a global Gremlin traversal that retrieves all vertex candidates but does not yet filter on label or
+     * property constraints.
+     *
+     * @return The global Gremlin traversal.
+     */
     @Override
     protected GraphTraversal<Vertex, Vertex> getBaseTraversal() {
         GraphTraversal.Admin<Vertex,Vertex> t = new DefaultGraphTraversal<>();

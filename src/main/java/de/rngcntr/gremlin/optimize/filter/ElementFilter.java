@@ -20,11 +20,18 @@ import org.apache.tinkerpop.gremlin.structure.Element;
 /**
  * @author Florian Grieskamp
  *
+ * An element filter expresses a constraint for a pattern element. For specific constraints, see the subclasses.
+ *
  * @param <E> The type of element, that this filter matches on.
  *            Either {@link org.apache.tinkerpop.gremlin.structure.Vertex} or
  *            {@link org.apache.tinkerpop.gremlin.structure.Edge}.
  */
 public abstract class ElementFilter<E extends Element> {
+    /**
+     * The type of element, that this filter matches on.
+     * Either {@link org.apache.tinkerpop.gremlin.structure.Vertex} or
+     * {@link org.apache.tinkerpop.gremlin.structure.Edge}.
+     */
     protected Class<E> filteredType;
 
     /**

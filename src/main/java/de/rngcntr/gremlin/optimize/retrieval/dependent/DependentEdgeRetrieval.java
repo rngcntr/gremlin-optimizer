@@ -22,14 +22,36 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.map.VertexStep;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 
+/**
+ * @author Florian Grieskamp
+ *
+ * Extends {@link DependentRetrieval} by the specification of a edge to be retrieved.
+ */
 public class DependentEdgeRetrieval extends DependentRetrieval<Edge> {
-    public DependentEdgeRetrieval(Class<Edge> retrievedType, PatternEdge edge, PatternVertex source, Direction direction) {
-        super(retrievedType);
+    /**
+     * Creates a dependent edge retrieval and estimates it as impossible.
+     *
+     * @param edge The edge to be retrieved.
+     * @param source The source vertex.
+     * @param direction The direction of the retrieval. <ul>
+     *                  <li><code>IN</code> if <code>edge</code> is an outgoing edge of <code>vertex</code></li>
+     *                  <li><code>OUT</code> if <code>edge</code> is an outgoing edge of <code>vertex</code></li>
+     * </ul>
+     */
+    public DependentEdgeRetrieval(PatternEdge edge, PatternVertex source, Direction direction) {
+        super();
         this.element = edge;
         this.source = source;
         this.direction = direction;
     }
 
+    /**
+     * Creates a local Gremlin traversal that starts at the source vertex and contains the a following step that
+     * retrieves the edge. The traversal is meant to be encapsulated within a Gremlin match step and
+     * does not yet filter on label or property constraints.
+     *
+     * @return The local Gremlin traversal.
+     */
     @Override
     protected GraphTraversal<?, Edge> getBaseTraversal() {
         GraphTraversal.Admin<?, Edge> t = new DefaultGraphTraversal<>();

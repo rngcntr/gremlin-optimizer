@@ -51,14 +51,14 @@ public class PatternVertex extends PatternElement<Vertex> {
 
     @Override
     public DirectRetrieval<Vertex> generateDirectRetrieval() {
-        return new DirectVertexRetrieval(Vertex.class, this);
+        return new DirectVertexRetrieval(this);
     }
 
     @Override
     public Collection<DependentRetrieval<Vertex>> generateDependentRetrievals() {
         ArrayList<DependentRetrieval<Vertex>> dependentRetrievals = new ArrayList<>();
-        in.forEach(e -> dependentRetrievals.add(new DependentVertexRetrieval(Vertex.class, this, e, Direction.IN)));
-        out.forEach(e -> dependentRetrievals.add(new DependentVertexRetrieval(Vertex.class, this, e, Direction.OUT)));
+        in.forEach(e -> dependentRetrievals.add(new DependentVertexRetrieval(this, e, Direction.IN)));
+        out.forEach(e -> dependentRetrievals.add(new DependentVertexRetrieval(this, e, Direction.OUT)));
         return dependentRetrievals;
     }
 

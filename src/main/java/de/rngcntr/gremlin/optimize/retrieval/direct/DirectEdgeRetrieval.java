@@ -20,12 +20,28 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 
+/**
+ * @author Florian Grieskamp
+ *
+ * Extends {@link DirectRetrieval} by the specification of a edge to be retrieved.
+ */
 public class DirectEdgeRetrieval extends DirectRetrieval<Edge> {
-    public DirectEdgeRetrieval(Class<Edge> retrievedType, PatternEdge edge) {
-        super(retrievedType);
+    /**
+     * Creates a direct edge retrieval and estimates it as impossible.
+     *
+     * @param edge The edge to be retrieved.
+     */
+    public DirectEdgeRetrieval(PatternEdge edge) {
+        super();
         this.element = edge;
     }
 
+    /**
+     * Creates a global Gremlin traversal that retrieves all edge candidates but does not yet filter on label or
+     * property constraints.
+     *
+     * @return The global Gremlin traversal.
+     */
     @Override
     protected GraphTraversal<Edge, Edge> getBaseTraversal() {
         GraphTraversal.Admin<Edge,Edge> t = new DefaultGraphTraversal<>();

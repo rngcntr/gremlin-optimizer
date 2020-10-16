@@ -50,17 +50,17 @@ public class PatternEdge extends PatternElement<Edge> {
 
     @Override
     public DirectEdgeRetrieval generateDirectRetrieval() {
-        return new DirectEdgeRetrieval(Edge.class, this);
+        return new DirectEdgeRetrieval(this);
     }
 
     @Override
     public Collection<DependentRetrieval<Edge>> generateDependentRetrievals() {
         ArrayList<DependentRetrieval<Edge>> retrievals = new ArrayList<>();
         if (start != null) {
-            retrievals.add(new DependentEdgeRetrieval(Edge.class, this, start, Direction.IN));
+            retrievals.add(new DependentEdgeRetrieval(this, start, Direction.IN));
         }
         if (end != null) {
-            retrievals.add(new DependentEdgeRetrieval(Edge.class, this, end, Direction.OUT));
+            retrievals.add(new DependentEdgeRetrieval(this, end, Direction.OUT));
         }
         return retrievals;
     }
