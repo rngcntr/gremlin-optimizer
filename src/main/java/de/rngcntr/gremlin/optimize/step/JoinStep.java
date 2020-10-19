@@ -21,6 +21,15 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.map.FlatMapStep;
 
 import java.util.*;
 
+/**
+ * This step provides support for the join operator in Gremlin. This implementation only supports full outer equality
+ * joins on labeled elments, which are produced by <code>select()</code> steps in Gremlin. The implemented join strategy
+ * is a nested loops join.<br>
+ * To apply a join on queries <code>a()</code> and <code>b()</code> the syntax is either <code>a().join(b())</code> or
+ * <code>b().join(a())</code>.
+ *
+ * @author Florian Grieskamp
+ */
 public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>> implements TraversalParent {
 
     private boolean initialized;
@@ -29,6 +38,12 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
 
     private List<Map<String,Object>> joinTuples;
 
+    /**
+     * Creates a {@link JoinStep} that joins the incoming traversers with the tuples returned by the inner traversal.
+     *
+     * @param traversal The parent traversal that this step belongs to.
+     * @param matchTraversal The inner traversal that supplies the set of tuples to join with.
+     */
     public JoinStep(Traversal.Admin<?,?> traversal, Traversal<?, Map<String,Object>> matchTraversal) {
         super(traversal);
         this.initialized = false;
@@ -37,6 +52,13 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
         this.integrateChild(matchTraversal.asAdmin());
     }
 
+    /**
+     * The first call initializes the step by executing the nested traversal and collecting it's result.
+     * In addition, every call performs the inner loop of a nested loops join on the supplied traverser.
+     *
+     * @param traverser The input element that is checked against all join candidates from the inner traversal.
+     * @return The joined mappings for the input traverser.
+     */
     @Override
     protected Iterator<Map<String,Object>> flatMap(Traverser.Admin<Map<String,Object>> traverser) {
         if (!initialized) {
@@ -46,6 +68,9 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
         return doNestedLoopsJoin(traverser);
     }
 
+    /**
+     * Executes the inner traversal and collects it's results.
+     */
     private void initialize() {
         assert traversal.getGraph().isPresent();
         matchTraversal.asAdmin().setGraph(traversal.getGraph().get());
@@ -53,18 +78,35 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
         initialized = true;
     }
 
+    /**
+     * Performs the inner loop of a nested loops join on the supplied traverser.
+     *
+     * @param traverser The input element that is checked against all join candidates from the inner traversal.
+     * @return The joined mappings for the input traverser.
+     */
     private Iterator<Map<String,Object>> doNestedLoopsJoin(Traverser.Admin<Map<String,Object>> traverser) {
         List<Map<String,Object>> results = new LinkedList<>();
 
-        for (Map<String,Object> probe : joinTuples) {
-            if (match(probe, traverser.get())) {
-                results.add(merge(probe, traverser.get()));
+        for (Map<String,Object> candidate : joinTuples) {
+            if (match(candidate, traverser.get())) {
+                results.add(merge(candidate, traverser.get()));
             }
         }
 
         return results.iterator();
     }
 
+    /**
+     * Checks whether two {@link Map}s match. The definition of a match is that both do not contain conflicting
+     * information, i.e. different values for the same keys.
+     *
+     * @param a The first {@link Map}.
+     * @param b The second {@link Map}.
+     * @return <ul>
+     *     <li><code>false</code> if a key exists in both {@link Map}s with different values</li>
+     *     <li><code>true</code> otherwise.</li>
+     * </ul>
+     */
     private boolean match(Map<String,Object> a, Map<String,Object> b) {
         for (String attr : a.keySet()) {
             if (b.containsKey(attr) && a.get(attr) != b.get(attr)) {
@@ -75,13 +117,26 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
         return true;
     }
 
-    private Map<String,Object> merge(Map<String,Object> a, Map<String,Object> b) {
+    /**
+     * Merges two {@link Map}s into a single {@link HashMap} that contains all of the entries.
+     *
+     * @param inputs The input set of {@link Map}s to be merged.
+     * @return The merged {@link HashMap}.
+     */
+    @SafeVarargs
+    private final Map<String,Object> merge(Map<String, Object>... inputs) {
         Map<String,Object> result = new HashMap<>();
-        result.putAll(a);
-        result.putAll(b);
+        for (Map<String, Object> input : inputs) {
+            result.putAll(input);
+        }
         return result;
     }
 
+    /**
+     * Represents this step as a human readable text.
+     *
+     * @return A text representation of the join step.
+     */
     public String toString() {
         return String.format("JoinStep(%s)", matchTraversal);
     }

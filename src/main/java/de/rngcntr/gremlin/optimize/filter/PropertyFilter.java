@@ -89,9 +89,9 @@ public class PropertyFilter<E extends Element> extends ElementFilter<E> {
     }
 
     /**
-     * Represents this filter as a human readable text
+     * Represents this filter as a human readable text.
      *
-     * @return A Text representation of the filter.
+     * @return A text representation of the filter.
      */
     @Override
     public String toString() {
