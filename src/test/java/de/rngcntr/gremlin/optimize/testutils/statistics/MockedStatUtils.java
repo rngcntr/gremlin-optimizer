@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package de.rngcntr.gremlin.optimize.statistics;
+package de.rngcntr.gremlin.optimize.testutils.statistics;
 
+import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
 import static org.mockito.ArgumentMatchers.argThat;

@@ -14,7 +14,7 @@
 
 package de.rngcntr.gremlin.optimize;
 
-import de.rngcntr.gremlin.optimize.statistics.MockedStatUtils;
+import de.rngcntr.gremlin.optimize.testutils.statistics.MockedStatUtils;
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
 import de.rngcntr.gremlin.optimize.structure.PatternGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
