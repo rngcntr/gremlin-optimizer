@@ -66,12 +66,12 @@ public class PatternEdge extends PatternElement<Edge> {
     }
 
     @Override
-    public List<PatternElement<?>> getNeighbors() {
+    public List<PatternElement<?>> getNeighbors(Direction direction) {
         ArrayList<PatternElement<?>> neighbors = new ArrayList<>();
-        if (start != null) {
+        if (start != null && (direction == Direction.IN || direction == Direction.BOTH)) {
             neighbors.add(start);
         }
-        if (end != null) {
+        if (end != null && (direction == Direction.OUT || direction == Direction.BOTH)) {
             neighbors.add(end);
         }
         return neighbors;

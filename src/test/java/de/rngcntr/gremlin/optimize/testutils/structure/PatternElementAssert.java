@@ -27,13 +27,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class PatternElementAssert {
 
-    /**
-     * Checks the existence and identity of a label filter on a pattern element.
-     *
-     * @param element The element to be filtered.
-     * @param labels Can be either zero or one label string.
-     * @param <E> Vertex or Edge.
-     */
     public static <E extends Element> void assertLabelsExactlyMatch(PatternElement<E> element, String... labels) {
         if (labels.length == 0) {
             assertFalse(element.hasLabelFilter());

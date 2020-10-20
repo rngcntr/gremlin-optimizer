@@ -14,15 +14,31 @@
 
 package de.rngcntr.gremlin.optimize.structure;
 
+/**
+ * Used to generate increasing longs to use as identifiers for pattern elements. The long IDs could also be
+ * replaced by UUIDs but that would impact readability in a negative way.
+ *
+ * @author Florian Grieskamp
+ */
 public class IdProvider {
-    private static int nextId = 0;
+    private static long nextId = 0L;
     private static final IdProvider INSTANCE = new IdProvider();
 
+    /**
+     * Gets the singleton instance of {@link IdProvider}.
+     *
+     * @return The instance.
+     */
     public static IdProvider getInstance() {
         return INSTANCE;
     }
 
-    public synchronized int getNextId() {
+    /**
+     * Gets the next unique long identifier.
+     *
+     * @return The next ID.
+     */
+    public synchronized long getNextId() {
         return nextId++;
     }
 }

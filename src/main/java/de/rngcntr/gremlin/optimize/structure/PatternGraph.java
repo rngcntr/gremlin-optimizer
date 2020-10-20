@@ -19,6 +19,7 @@ import de.rngcntr.gremlin.optimize.util.GremlinWriter;
 import de.rngcntr.gremlin.optimize.util.GremlinParser;
 import de.rngcntr.gremlin.optimize.util.Permutations;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
+import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
 import java.util.*;
@@ -62,7 +63,7 @@ public class PatternGraph {
             long sizeAfterUpdate = elementToUpdate.getBestRetrieval().getEstimatedSize();
 
             if (sizeAfterUpdate < sizeBeforeUpdate) {
-                updateRequired.addAll(elementToUpdate.getNeighbors());
+                updateRequired.addAll(elementToUpdate.getNeighbors(Direction.BOTH));
             }
         }
 

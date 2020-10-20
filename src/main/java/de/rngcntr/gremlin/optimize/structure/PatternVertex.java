@@ -63,10 +63,19 @@ public class PatternVertex extends PatternElement<Vertex> {
     }
 
     @Override
-    public List<PatternElement<?>> getNeighbors() {
+    public List<PatternElement<?>> getNeighbors(Direction direction) {
         ArrayList<PatternElement<?>> neighbors = new ArrayList<>(in.size() + out.size());
-        neighbors.addAll(in);
-        neighbors.addAll(out);
+        switch (direction) {
+            case IN:
+                neighbors.addAll(in);
+                break;
+            case OUT:
+                neighbors.addAll(out);
+                break;
+            case BOTH:
+                neighbors.addAll(in);
+                neighbors.addAll(out);
+        }
         return neighbors;
     }
 

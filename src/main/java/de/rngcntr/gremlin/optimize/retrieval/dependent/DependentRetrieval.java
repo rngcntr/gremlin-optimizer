@@ -88,7 +88,7 @@ public abstract class DependentRetrieval<E extends Element>  extends Retrieval<E
         /*
             determine selectivity of label filter
          */
-        double labelSelectivity = 1.0;
+        double labelSelectivity;
         if (getElement().hasLabelFilter()) {
             if (getSource().hasLabelFilter()) {
                 // calculate #{eLabel -> vLabel} / #{eLabel}

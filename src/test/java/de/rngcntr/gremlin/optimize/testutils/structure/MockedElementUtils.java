@@ -27,6 +27,7 @@ import org.mockito.Mockito;
 import java.util.Arrays;
 
 public class MockedElementUtils {
+    @SafeVarargs
     public static PatternVertex mockVertex(long estimatedAmount, LabelFilter<Vertex> labelFilter, PropertyFilter<Vertex>... propertyFilters) {
         PatternVertex mockedVertex = mockVertex(labelFilter, propertyFilters);
         DirectVertexRetrieval mockedRetrieval = Mockito.mock(DirectVertexRetrieval.class);
@@ -45,6 +46,7 @@ public class MockedElementUtils {
         return mockedVertex;
     }
 
+    @SafeVarargs
     public static PatternEdge mockEdge(long estimatedAmount, LabelFilter<Edge> labelFilter, PropertyFilter<Edge>... propertyFilters) {
         PatternEdge mockedEdge = mockEdge(labelFilter, propertyFilters);
         DirectEdgeRetrieval mockedRetrieval = Mockito.mock(DirectEdgeRetrieval.class);

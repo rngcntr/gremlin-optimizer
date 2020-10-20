@@ -20,6 +20,7 @@ import de.rngcntr.gremlin.optimize.structure.PatternElement;
 import de.rngcntr.gremlin.optimize.structure.PatternGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
+import org.apache.tinkerpop.gremlin.structure.Direction;
 
 import java.util.*;
 
@@ -48,7 +49,7 @@ public class GremlinWriter {
             if (baseElement.isEdge()) {
                 // If the base element is an edge and does not have dependent neighbors on both ends,
                 // the open ends should be added to the pattern, too (for joining)
-                for (PatternElement<?> neighbor : baseElement.getNeighbors()) {
+                for (PatternElement<?> neighbor : baseElement.getNeighbors(Direction.BOTH)) {
                     if (baseElement.getDependentNeighbors().contains(neighbor)) {continue;}
                     assert neighbor.getDependentRetrieval(baseElement).isPresent();
                     matchTraversals.add(neighbor.getDependentRetrieval(baseElement).get().asTraversal());
@@ -64,7 +65,7 @@ public class GremlinWriter {
                 if (dependentNeighbors.isEmpty() && dependentElement.isEdge()) {
                     // pattern groups may not end in open edges
                     // => add their adjacent vertices to the pattern group
-                    for (PatternElement<?> neighbor : dependentElement.getNeighbors()) {
+                    for (PatternElement<?> neighbor : dependentElement.getNeighbors(Direction.BOTH)) {
                         if (elementsToBeSelected.contains(neighbor)) {continue;}
                         assert neighbor.getDependentRetrieval(dependentElement).isPresent();
                         matchTraversals.add(neighbor.getDependentRetrieval(dependentElement).get().asTraversal());
