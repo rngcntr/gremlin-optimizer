@@ -18,6 +18,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 import org.apache.tinkerpop.gremlin.process.traversal.util.DefaultTraversalSideEffects;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -92,16 +93,34 @@ public class JoinStepTests {
 
         Mockito.when(parentTraversal.getGraph()).thenReturn(Optional.of(graph));
         Mockito.when(innerTraversal.asAdmin()).thenReturn(innerTraversalAdmin);
-        Mockito.when(innerTraversal.toList()).thenReturn(joinTuples);
+        Mockito.when(innerTraversalAdmin.toList()).thenReturn(joinTuples);
         Mockito.when(traverser.get()).thenReturn(traverserContent);
         Mockito.when(innerTraversalAdmin.getSideEffects()).thenReturn(new DefaultTraversalSideEffects());
+        Mockito.when(innerTraversalAdmin.clone()).thenReturn(innerTraversalAdmin);
 
         JoinStep js = new JoinStep(parentTraversal, innerTraversal);
         Iterator result = js.flatMap(traverser);
 
         assertEqualsIterators(expectedResults.iterator(), result);
-        Mockito.verify(innerTraversalAdmin).setGraph(graph);
-        Mockito.verify(innerTraversal, Mockito.times(1)).toList();
+        Mockito.verify(innerTraversalAdmin, Mockito.times(1)).toList();
+        assertEquals(1, js.getLocalChildren().size());
+        assertEquals(innerTraversalAdmin, js.getLocalChildren().get(0));
+    }
+
+    @Test
+    public void testClone() {
+        Traversal.Admin<?,?> mockedParentTraversal = Mockito.mock(Traversal.Admin.class);
+        Traversal.Admin<Map<String, Object>, Map<String, Object>> mockedMatchTraversal = Mockito.mock(Traversal.Admin.class);
+        Traversal.Admin<Map<String, Object>, Map<String, Object>> clonedMatchTraversal = Mockito.mock(Traversal.Admin.class);
+        Mockito.when(mockedMatchTraversal.asAdmin()).thenReturn(mockedMatchTraversal);
+        Mockito.when(mockedMatchTraversal.getSideEffects()).thenReturn(new DefaultTraversalSideEffects());
+        Mockito.when(mockedMatchTraversal.clone()).thenReturn(clonedMatchTraversal);
+
+        JoinStep js = new JoinStep(mockedParentTraversal, mockedMatchTraversal);
+        JoinStep clone = js.clone();
+
+        assertEquals(1, clone.getLocalChildren().size());
+        assertEquals(clonedMatchTraversal, clone.getLocalChildren().get(0));
     }
 
     private static Map<String, Object> makeMap(String k0, Object v0) {

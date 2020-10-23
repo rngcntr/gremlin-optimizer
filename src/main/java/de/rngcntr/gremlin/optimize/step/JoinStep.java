@@ -34,7 +34,7 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
 
     private boolean initialized;
     private final Traversal.Admin<?,?> traversal;
-    private final Traversal<?, Map<String,Object>> matchTraversal;
+    private Traversal.Admin<Map<String,Object>, Map<String,Object>> matchTraversal;
 
     private List<Map<String,Object>> joinTuples;
 
@@ -44,12 +44,22 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
      * @param traversal The parent traversal that this step belongs to.
      * @param matchTraversal The inner traversal that supplies the set of tuples to join with.
      */
-    public JoinStep(Traversal.Admin<?,?> traversal, Traversal<?, Map<String,Object>> matchTraversal) {
+    public JoinStep(Traversal.Admin<?,?> traversal, Traversal<Map<String,Object>, Map<String,Object>> matchTraversal) {
         super(traversal);
         this.initialized = false;
         this.traversal = traversal;
-        this.matchTraversal = matchTraversal;
-        this.integrateChild(matchTraversal.asAdmin());
+        this.matchTraversal = this.integrateChild(matchTraversal.asAdmin());
+    }
+
+    /**
+     * Gets the inner traversal of the join.
+     *
+     * @return The inner traversal.
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<Traversal.Admin<Map<String,Object>, Map<String,Object>>> getLocalChildren() {
+        return Collections.singletonList(matchTraversal);
     }
 
     /**
@@ -72,8 +82,6 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
      * Executes the inner traversal and collects it's results.
      */
     private void initialize() {
-        assert traversal.getGraph().isPresent();
-        matchTraversal.asAdmin().setGraph(traversal.getGraph().get());
         joinTuples = matchTraversal.toList();
         initialized = true;
     }
@@ -130,6 +138,18 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
             result.putAll(input);
         }
         return result;
+    }
+
+    /**
+     * Creates a copy of this step that also contains a copy of the nested match traversal.
+     *
+     * @return The cloned join step.
+     */
+    @Override
+    public JoinStep clone() {
+        final JoinStep clone = (JoinStep) super.clone();
+        clone.matchTraversal = this.matchTraversal.clone();
+        return clone;
     }
 
     /**

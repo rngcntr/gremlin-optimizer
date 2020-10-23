@@ -20,6 +20,8 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 
+import java.util.Map;
+
 /**
  * @author Florian Grieskamp
  *
@@ -43,9 +45,9 @@ public class DirectEdgeRetrieval extends DirectRetrieval<Edge> {
      * @return The global Gremlin traversal.
      */
     @Override
-    protected GraphTraversal<Edge, Edge> getBaseTraversal() {
-        GraphTraversal.Admin<Edge,Edge> t = new DefaultGraphTraversal<>();
-        t.addStep(new GraphStep<Edge,Edge>(t, Edge.class, true));
+    protected GraphTraversal<Map<String,Object>, Edge> getBaseTraversal() {
+        GraphTraversal.Admin<Map<String,Object>,Edge> t = new DefaultGraphTraversal<>();
+        t.addStep(new GraphStep<Map<String,Object>,Edge>(t, Edge.class, true));
         return t;
     }
 }

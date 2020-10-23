@@ -22,6 +22,8 @@ import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -41,7 +43,7 @@ public class DirectEdgeRetrievalTests {
         DirectEdgeRetrieval r = Mockito.mock(DirectEdgeRetrieval.class,
                 Mockito.withSettings().useConstructor(e).defaultAnswer(Mockito.CALLS_REAL_METHODS));
 
-        final GraphTraversal<Edge, Edge> baseTraversal = r.getBaseTraversal();
+        final GraphTraversal<Map<String,Object>, Edge> baseTraversal = r.getBaseTraversal();
 
         assertEquals(1, baseTraversal.asAdmin().getSteps().size());
         assertTrue(baseTraversal.asAdmin().getStartStep() instanceof GraphStep);

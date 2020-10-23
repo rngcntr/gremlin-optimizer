@@ -20,6 +20,8 @@ import de.rngcntr.gremlin.optimize.structure.PatternElement;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
+import java.util.Map;
+
 /**
  * @author Florian Grieskamp
  *
@@ -72,7 +74,7 @@ public abstract class Retrieval<E extends Element> implements Comparable<Retriev
      *
      * @return The Gremlin traversal.
      */
-    protected abstract GraphTraversal<?,E> getBaseTraversal();
+    protected abstract GraphTraversal<Map<String,Object>,E> getBaseTraversal();
 
     /**
      * Generates a traversal that retrieves all candidates for the pattern element and also applies the element's
@@ -80,8 +82,8 @@ public abstract class Retrieval<E extends Element> implements Comparable<Retriev
      *
      * @return The complete traversal.
      */
-    public GraphTraversal<?,E> asTraversal() {
-        GraphTraversal<?,E> t = getBaseTraversal();
+    public GraphTraversal<Map<String,Object>,E> asTraversal() {
+        GraphTraversal<Map<String,Object>,E> t = getBaseTraversal();
 
         if (getElement().hasLabelFilter()) {
             getElement().getLabelFilter().applyTo(t);

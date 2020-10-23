@@ -28,7 +28,7 @@ public class GremlinWriter {
 
     public static GraphTraversal<?,?> buildTraversal(PatternGraph pg) {
         Set<PatternElement<?>> directlyRetrieved = new HashSet<>();
-        Set<GraphTraversal<?,Map<String,Object>>> joinedTraversals = new HashSet<>();
+        Set<GraphTraversal<Map<String,Object>,Map<String,Object>>> joinedTraversals = new HashSet<>();
 
         /*
          * find all directly retrievable elements
@@ -77,16 +77,16 @@ public class GremlinWriter {
             }
 
             // assemble Gremlin match traversal
-            GraphTraversal<?,?> assembledTraversal = baseElement.getBestRetrieval().asTraversal();
+            GraphTraversal<Map<String,Object>,?> assembledTraversal = baseElement.getBestRetrieval().asTraversal();
             if (matchTraversals.size() > 0) {
                 assembledTraversal = assembledTraversal.match(matchTraversals.toArray(new GraphTraversal[0]));
             }
             joinedTraversals.add(GremlinWriter.selectElements(assembledTraversal, elementsToBeSelected, true));
         }
 
-        Iterator<GraphTraversal<?,Map<String,Object>>> joinedTraversalIterator = joinedTraversals.iterator();
+        Iterator<GraphTraversal<Map<String,Object>,Map<String,Object>>> joinedTraversalIterator = joinedTraversals.iterator();
         assert joinedTraversalIterator.hasNext();
-        GraphTraversal<?,?> completeTraversal = joinedTraversalIterator.next();
+        GraphTraversal<Map<String,Object>,?> completeTraversal = joinedTraversalIterator.next();
         completeTraversal.asAdmin().setGraph(pg.getSourceGraph());
         while (joinedTraversalIterator.hasNext()) {
             completeTraversal.asAdmin().addStep(new JoinStep(completeTraversal.asAdmin(), joinedTraversalIterator.next()));
@@ -94,7 +94,7 @@ public class GremlinWriter {
         return GremlinWriter.selectLabels(completeTraversal, pg.getElementsToReturn());
     }
 
-    private static GraphTraversal<?, Map<String, Object>> selectElements(GraphTraversal<?,?> t, Collection<PatternElement<?>> elements, boolean alwaysMap) {
+    private static GraphTraversal<Map<String,Object>, Map<String, Object>> selectElements(GraphTraversal<Map<String,Object>,?> t, Collection<PatternElement<?>> elements, boolean alwaysMap) {
         String[] internalLabels = elements.stream()
                 .map(PatternElement::getId)
                 .map(String::valueOf)
@@ -112,7 +112,7 @@ public class GremlinWriter {
         }
     }
 
-    private static GraphTraversal<?, Map<String, Object>> selectLabels(GraphTraversal<?,?> t, Map<PatternElement<?>, String> mappedElements) {
+    private static GraphTraversal<?, Map<String, Object>> selectLabels(GraphTraversal<Map<String,Object>,?> t, Map<PatternElement<?>, String> mappedElements) {
         List<PatternElement<?>> elements = new ArrayList<>(mappedElements.keySet());
         String[] externalLabels = elements.stream()
                 .map(mappedElements::get)

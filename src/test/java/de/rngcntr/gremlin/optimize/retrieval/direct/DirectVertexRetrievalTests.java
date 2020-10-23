@@ -22,6 +22,8 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -41,7 +43,7 @@ public class DirectVertexRetrievalTests {
         DirectVertexRetrieval r = Mockito.mock(DirectVertexRetrieval.class,
                 Mockito.withSettings().useConstructor(v).defaultAnswer(Mockito.CALLS_REAL_METHODS));
 
-        final GraphTraversal<Vertex, Vertex> baseTraversal = r.getBaseTraversal();
+        final GraphTraversal<Map<String,Object>, Vertex> baseTraversal = r.getBaseTraversal();
 
         assertEquals(1, baseTraversal.asAdmin().getSteps().size());
         assertTrue(baseTraversal.asAdmin().getStartStep() instanceof GraphStep);

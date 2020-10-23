@@ -20,6 +20,8 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
+import java.util.Map;
+
 /**
  * @author Florian Grieskamp
  *
@@ -43,9 +45,9 @@ public class DirectVertexRetrieval extends DirectRetrieval<Vertex> {
      * @return The global Gremlin traversal.
      */
     @Override
-    protected GraphTraversal<Vertex, Vertex> getBaseTraversal() {
-        GraphTraversal.Admin<Vertex,Vertex> t = new DefaultGraphTraversal<>();
-        t.addStep(new GraphStep<Vertex,Vertex>(t, Vertex.class, true));
+    protected GraphTraversal<Map<String,Object>, Vertex> getBaseTraversal() {
+        GraphTraversal.Admin<Map<String,Object>,Vertex> t = new DefaultGraphTraversal<>();
+        t.addStep(new GraphStep<Map<String,Object>,Vertex>(t, Vertex.class, true));
         return t;
     }
 }

@@ -22,6 +22,8 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.map.VertexStep;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 
+import java.util.Map;
+
 /**
  * @author Florian Grieskamp
  *
@@ -53,8 +55,8 @@ public class DependentEdgeRetrieval extends DependentRetrieval<Edge> {
      * @return The local Gremlin traversal.
      */
     @Override
-    protected GraphTraversal<?, Edge> getBaseTraversal() {
-        GraphTraversal.Admin<?, Edge> t = new DefaultGraphTraversal<>();
+    protected GraphTraversal<Map<String,Object>, Edge> getBaseTraversal() {
+        GraphTraversal.Admin<Map<String,Object>, Edge> t = new DefaultGraphTraversal<>();
         t = t.as(String.valueOf(source.getId())).asAdmin();
         t.addStep(new VertexStep<>(t, Edge.class, direction.opposite()));
         return t;
