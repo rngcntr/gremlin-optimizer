@@ -42,9 +42,9 @@ public class OptimizationTests {
     public void testExampleFromAnimation() {
         StatisticsProvider stats = mockStatsFromAnimation();
         PatternGraph pg = new PatternGraph(g.V()
-                .hasLabel("store")
-                .where(__.out("belongs_to").hasLabel("company").has("name", "Apple"))
-                .where(__.in("buys_at").hasLabel("customer").has("name", "Bob"))
+                .hasLabel("store").as("s")
+                .out("belongs_to").hasLabel("company").has("name", "Apple").select("s")
+                .in("buys_at").hasLabel("customer").has("name", "Bob").select("s")
                 .out("located_in").hasLabel("country"));
 
         pg.optimize(stats);

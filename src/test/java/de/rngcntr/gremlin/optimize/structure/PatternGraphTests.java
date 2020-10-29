@@ -123,47 +123,40 @@ public class PatternGraphTests {
     }
 
     @Test
-    public void testWhereStepDoesNotInfluenceReturnedElement() {
-        PatternGraph pg = new PatternGraph(g.V().where(__.inE("knows")));
-        assertEquals(1, pg.getElementsToReturn().keySet().size());
-        assertEquals(Vertex.class, pg.getElementsToReturn().keySet().iterator().next().getType());
-    }
-
-    @Test
     public void testExampleFromAnimation() {
         PatternGraph basePattern = new PatternGraph(g.V()
-                .hasLabel("store")
-                .where(__.out("belongs_to").hasLabel("company").has("name", "Apple"))
-                .where(__.in("buys_at").hasLabel("customer").has("name", "Bob"))
+                .hasLabel("store").as("s")
+                .out("belongs_to").hasLabel("company").has("name", "Apple").select("s")
+                .in("buys_at").hasLabel("customer").has("name", "Bob").select("s")
                 .out("located_in").hasLabel("country"));
 
         List<PatternGraph> otherPatterns = new ArrayList<>();
         otherPatterns.add(new PatternGraph(g.V()
-                .hasLabel("store")
-                .where(__.in("buys_at").hasLabel("customer").has("name", "Bob"))
-                .where(__.out("belongs_to").hasLabel("company").has("name", "Apple"))
+                .hasLabel("store").as("s")
+                .in("buys_at").hasLabel("customer").has("name", "Bob").select("s")
+                .out("belongs_to").hasLabel("company").has("name", "Apple").select("s")
                 .out("located_in").hasLabel("country")));
         otherPatterns.add(new PatternGraph(g.V()
                 .hasLabel("customer")
                 .has("name", "Bob")
                 .out("buys_at")
-                .hasLabel("store")
-                .where(__.out("belongs_to").hasLabel("company").has("name", "Apple"))
+                .hasLabel("store").as("s")
+                .out("belongs_to").hasLabel("company").has("name", "Apple").select("s")
                 .out("located_in").hasLabel("country")));
         otherPatterns.add(new PatternGraph(g.V()
                 .hasLabel("company")
                 .has("name", "Apple")
                 .in("belongs_to")
-                .hasLabel("store")
-                .where(__.in("buys_at").hasLabel("customer").has("name", "Bob"))
+                .hasLabel("store").as("s")
+                .in("buys_at").hasLabel("customer").has("name", "Bob").select("s")
                 .out("located_in").hasLabel("country")));
         otherPatterns.add(new PatternGraph(g.V()
                 .hasLabel("country")
                 .as("returnValue")
                 .in("located_in")
-                .hasLabel("store")
-                .where(__.in("buys_at").hasLabel("customer").has("name", "Bob"))
-                .where(__.out("belongs_to").hasLabel("company").has("name", "Apple"))
+                .hasLabel("store").as("s")
+                .in("buys_at").hasLabel("customer").has("name", "Bob").select("s")
+                .out("belongs_to").hasLabel("company").has("name", "Apple").select("s")
                 .select("returnValue")
         ));
 

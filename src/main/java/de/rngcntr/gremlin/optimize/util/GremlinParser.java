@@ -20,11 +20,9 @@ import de.rngcntr.gremlin.optimize.structure.PatternEdge;
 import de.rngcntr.gremlin.optimize.structure.PatternElement;
 import de.rngcntr.gremlin.optimize.structure.PatternVertex;
 import org.apache.tinkerpop.gremlin.process.traversal.Step;
-import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.step.Scoping;
 import org.apache.tinkerpop.gremlin.process.traversal.step.filter.HasStep;
-import org.apache.tinkerpop.gremlin.process.traversal.step.filter.TraversalFilterStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.*;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.EmptyStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
@@ -106,14 +104,10 @@ public class GremlinParser {
             parseVertexStep((VertexStep<?>) currentStep);
         } else if (currentStep instanceof EdgeVertexStep) {
             parseEdgeStep((EdgeVertexStep) currentStep);
-        } else if (currentStep instanceof TraversalFilterStep) {
-            parseWhereStep((TraversalFilterStep<?>) currentStep);
-        } else if (currentStep instanceof SelectStep || currentStep instanceof SelectOneStep) {
-            if (currentStep.getNextStep() != EmptyStep.instance()) {
-                // TODO currently, only select steps at the end of the query are supported
-                throw new IllegalArgumentException("Select steps are only allowed at the end of a query");
-            }
-            parseSelectStep((Scoping) currentStep);
+        } else if (currentStep instanceof SelectOneStep) {
+            parseSelectStep((SelectOneStep<?,?>) currentStep);
+        } else if (currentStep instanceof SelectStep) {
+            parseSelectStep((SelectStep<?,?>) currentStep);
         } else {
             throw new IllegalArgumentException("Unsupported step: " + currentStep);
         }
@@ -191,7 +185,20 @@ public class GremlinParser {
         currentElementStack.push(edge);
     }
 
-    private void parseSelectStep(Scoping selectStep) {
+    private void parseSelectStep(SelectOneStep<?,?> selectStep) {
+        currentElementStack.pop();
+        assert selectStep.getScopeKeys().size() == 1;
+        String selectedLabel = selectStep.getScopeKeys().iterator().next();
+        PatternElement<?> elem = stepLabelMap.get(selectedLabel);
+        if (elem == null) throw new IllegalArgumentException("Step label " + selectedLabel + " is undefined");
+        currentElementStack.push(elem);
+    }
+
+    private void parseSelectStep(SelectStep<?,?> selectStep) {
+        if ((Step<?,?>) selectStep.getNextStep() != EmptyStep.instance()) {
+            // TODO currently, selecting multiple step labels is only supported at the end of a query
+            throw new IllegalArgumentException("Selecting multiple labels is only allowed at the end of a query");
+        }
         PatternElement<?> currentElement = currentElementStack.pop();
         Set<String> selectedLabels = selectStep.getScopeKeys();
         selectedLabels.forEach(l -> {
@@ -227,13 +234,5 @@ public class GremlinParser {
 
         elements.add(newVertex);
         currentElementStack.push(newVertex);
-    }
-
-    private void parseWhereStep(TraversalFilterStep<?> filterStep) {
-        final List<? extends Traversal.Admin<?, ?>> localChildren = filterStep.getLocalChildren();
-        assert localChildren.size() == 1 : "Where steps with multiple local children are currently not supported.";
-
-        currentStepStack.push(localChildren.get(0).getStartStep());
-        currentElementStack.push(currentElementStack.peek());
     }
 }

@@ -21,6 +21,7 @@ import de.rngcntr.gremlin.optimize.structure.PatternGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerFactory;
 import org.junit.jupiter.api.Assertions;
@@ -60,49 +61,53 @@ public class RealGraphTests {
                         g.V()),
                 Arguments.of(1, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
                         g.V()
-                        .has("name", "marko")),
+                                .has("name", "marko")),
                 Arguments.of(4, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
                         g.V()
-                        .hasLabel("person")),
+                                .hasLabel("person")),
                 Arguments.of(2, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
                         g.V()
-                        .hasLabel("person").has("age", P.lt(30))),
+                                .hasLabel("person").has("age", P.lt(30))),
                 Arguments.of(2, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
                         g.V()
-                        .hasLabel("person").has("name", "josh")
-                        .outE("created")),
+                                .hasLabel("person").has("name", "josh")
+                                .outE("created")),
                 Arguments.of(1, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
                         g.V()
-                        .hasLabel("person")
-                        .outE("created").has("weight", 1.0)),
+                                .hasLabel("person")
+                                .outE("created").has("weight", 1.0)),
                 Arguments.of(0, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
                         g.V()
-                        .hasLabel("person")
-                        .out("created")
-                        .hasLabel("person")),
+                                .hasLabel("person")
+                                .out("created")
+                                .hasLabel("person")),
                 Arguments.of(1, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
                         g.V()
-                        .hasLabel("person").has("name", "josh")
-                        .out("created")
-                        .hasLabel("software")
-                        .in("created")
-                        .hasLabel("person").has("name", "marko")),
+                                .hasLabel("person").has("name", "josh")
+                                .out("created")
+                                .hasLabel("software")
+                                .in("created")
+                                .hasLabel("person").has("name", "marko")),
                 Arguments.of(1, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
                         g.V()
-                        .hasLabel("person").has("name", "josh")
-                        .out("created")
-                        .hasLabel("software").as("a")
-                        .in("created")
-                        .hasLabel("person").has("name", "marko")
-                        .select("a")),
+                                .hasLabel("person").has("name", "josh")
+                                .out("created")
+                                .hasLabel("software").as("a")
+                                .in("created")
+                                .hasLabel("person").has("name", "marko")
+                                .select("a")),
                 Arguments.of(1, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
                         g.V()
-                        .hasLabel("person").has("name", "josh")
-                        .out("created").as("a")
-                        .hasLabel("software")
-                        .in("created").as("b")
-                        .hasLabel("person").has("name", "marko")
-                        .select("a", "b"))
+                                .hasLabel("person").has("name", "josh")
+                                .out("created").as("a")
+                                .hasLabel("software")
+                                .in("created").as("b")
+                                .hasLabel("person").has("name", "marko")
+                                .select("a", "b")),
+                Arguments.of(2, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
+                        g.V()
+                                .hasLabel("person").as("a")
+                                .outE("knows").select("a"))
         );
     }
 

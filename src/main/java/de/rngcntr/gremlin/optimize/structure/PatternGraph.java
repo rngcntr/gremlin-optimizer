@@ -29,6 +29,7 @@ public class PatternGraph {
     private List<PatternElement<?>> elements;
     private Map<PatternElement<?>, String> elementsToReturn;
     private final Graph sourceGraph;
+    private GraphTraversal<?, ?> originalTraversal;
 
     public PatternGraph(GraphTraversal<?,?> t) {
         elements = new ArrayList<>();
@@ -43,6 +44,7 @@ public class PatternGraph {
 
         elements = parser.getElements();
         elementsToReturn = parser.getElementsToReturn();
+        originalTraversal = t;
     }
 
     public GraphTraversal<?,?> optimize(StatisticsProvider stats) {
@@ -67,7 +69,9 @@ public class PatternGraph {
             }
         }
 
-        return GremlinWriter.buildTraversal(this);
+        final GraphTraversal<?, ?> constructedTraversal = GremlinWriter.buildTraversal(this);
+        constructedTraversal.asAdmin().setStrategies(originalTraversal.asAdmin().getStrategies());
+        return constructedTraversal;
     }
 
     public List<PatternElement<?>> getElements() {

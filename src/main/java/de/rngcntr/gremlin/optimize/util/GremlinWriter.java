@@ -16,6 +16,7 @@ package de.rngcntr.gremlin.optimize.util;
 
 import de.rngcntr.gremlin.optimize.retrieval.direct.DirectRetrieval;
 import de.rngcntr.gremlin.optimize.step.JoinStep;
+import de.rngcntr.gremlin.optimize.strategy.FlattenMatchStepStrategy;
 import de.rngcntr.gremlin.optimize.structure.PatternElement;
 import de.rngcntr.gremlin.optimize.structure.PatternGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -91,7 +92,10 @@ public class GremlinWriter {
         while (joinedTraversalIterator.hasNext()) {
             completeTraversal.asAdmin().addStep(new JoinStep(completeTraversal.asAdmin(), joinedTraversalIterator.next()));
         }
-        return GremlinWriter.selectLabels(completeTraversal, pg.getElementsToReturn());
+
+        final GraphTraversal<?, Map<String, Object>> assembledTraversal = GremlinWriter.selectLabels(completeTraversal, pg.getElementsToReturn());
+        FlattenMatchStepStrategy.instance().apply(assembledTraversal.asAdmin());
+        return assembledTraversal;
     }
 
     private static GraphTraversal<Map<String,Object>, Map<String, Object>> selectElements(GraphTraversal<Map<String,Object>,?> t, Collection<PatternElement<?>> elements, boolean alwaysMap) {
