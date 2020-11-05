@@ -33,7 +33,6 @@ import java.util.*;
 public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>> implements TraversalParent {
 
     private boolean initialized;
-    private final Traversal.Admin<?,?> traversal;
     private Traversal.Admin<Map<String,Object>, Map<String,Object>> matchTraversal;
 
     private List<Map<String,Object>> joinTuples;
@@ -47,7 +46,6 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
     public JoinStep(Traversal.Admin<?,?> traversal, Traversal<Map<String,Object>, Map<String,Object>> matchTraversal) {
         super(traversal);
         this.initialized = false;
-        this.traversal = traversal;
         this.matchTraversal = this.integrateChild(matchTraversal.asAdmin());
     }
 

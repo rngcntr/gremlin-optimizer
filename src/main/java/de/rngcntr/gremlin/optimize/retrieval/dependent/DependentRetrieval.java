@@ -133,7 +133,7 @@ public abstract class DependentRetrieval<E extends Element>  extends Retrieval<E
         /*
             combine to estimation
          */
-        estimatedSize = (long) (incomingSize * labelSelectivity * filterSelectivity);
+        estimatedSize = (long) Math.ceil(incomingSize * labelSelectivity * filterSelectivity);
     }
 
     /**

@@ -52,9 +52,9 @@ public class PatternGraph {
         elements.forEach(PatternElement::initializeRetrievals);
         elements.forEach(e -> e.estimateDirectRetrievals(stats));
 
-        Set<PatternElement<?>> updateRequired = new HashSet<>(elements);
-        PatternElement<?> startingPoint = Collections.min(updateRequired);
-        updateRequired.remove(startingPoint);
+        PriorityQueue<PatternElement<?>> updateRequired = new PriorityQueue<>(elements);
+        //PatternElement<?> startingPoint = Collections.min(updateRequired);
+        //updateRequired.remove(startingPoint);
 
         // n-th step
         while (!updateRequired.isEmpty()) {
