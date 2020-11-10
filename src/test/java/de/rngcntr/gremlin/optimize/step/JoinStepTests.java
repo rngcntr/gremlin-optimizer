@@ -37,41 +37,49 @@ public class JoinStepTests {
                 Arguments.of(
                         makeMap("a", 0),
                         Collections.singletonList(makeMap("a", 0)),
+                        Collections.singletonList("a"),
                         Collections.singletonList(makeMap("a", 0))
                 ),
                 Arguments.of(
                         makeMap("a", 0),
                         Collections.singletonList(makeMap("b", 0)),
+                        Collections.emptyList(),
                         Collections.singletonList(makeMap("a", 0, "b", 0))
                 ),
                 Arguments.of(
                         makeMap("a", 0),
                         Collections.singletonList(makeMap("a", 1)),
+                        Collections.singletonList("a"),
                         Collections.emptyList()
                 ),
                 Arguments.of(
                         makeMap("a", 0),
                         Collections.singletonList(makeMap("a", 1, "b", 2)),
+                        Collections.singletonList("a"),
                         Collections.emptyList()
                 ),
                 Arguments.of(
                         makeMap("a", 0, "b", 2),
                         Collections.singletonList(makeMap("a", 1, "b", 2)),
+                        Arrays.asList("a", "b"),
                         Collections.emptyList()
                 ),
                 Arguments.of(
                         makeMap("a", 0),
                         Arrays.asList(makeMap("a", 0, "b", 2), makeMap("a", 1, "b", 3)),
+                        Collections.singletonList("a"),
                         Collections.singletonList(makeMap("a", 0, "b", 2))
                 ),
                 Arguments.of(
                         makeMap("a", 0, "c", 4),
                         Arrays.asList(makeMap("a", 0, "b", 2), makeMap("a", 1, "b", 3)),
+                        Arrays.asList("a"),
                         Collections.singletonList(makeMap("a", 0, "b", 2, "c", 4))
                 ),
                 Arguments.of(
                         makeMap("a", 0, "c", 4),
                         Arrays.asList(makeMap("a", 0, "b", 2), makeMap("a", 0, "b", 3)),
+                        Arrays.asList("a"),
                         Arrays.asList(
                                 makeMap("a", 0, "b", 2, "c", 4),
                                 makeMap("a", 0, "b", 3, "c", 4)
@@ -84,7 +92,7 @@ public class JoinStepTests {
     @MethodSource("generateArguments")
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void testFlatMap(Map<String, Object> traverserContent, List<Map<String, Object>> joinTuples,
-                            List<Map<String, Object>> expectedResults) {
+                            List<String> joinAttributes, List<Map<String, Object>> expectedResults) {
         Graph graph = Mockito.mock(Graph.class);
         Traversal.Admin parentTraversal = Mockito.mock(Traversal.Admin.class);
         Traversal innerTraversal = Mockito.mock(Traversal.class);
@@ -98,7 +106,7 @@ public class JoinStepTests {
         Mockito.when(innerTraversalAdmin.getSideEffects()).thenReturn(new DefaultTraversalSideEffects());
         Mockito.when(innerTraversalAdmin.clone()).thenReturn(innerTraversalAdmin);
 
-        JoinStep js = new JoinStep(parentTraversal, innerTraversal);
+        JoinStep js = new JoinStep(parentTraversal, innerTraversal, new HashSet(joinAttributes));
         Iterator result = js.flatMap(traverser);
 
         assertEqualsIterators(expectedResults.iterator(), result);
@@ -116,7 +124,7 @@ public class JoinStepTests {
         Mockito.when(mockedMatchTraversal.getSideEffects()).thenReturn(new DefaultTraversalSideEffects());
         Mockito.when(mockedMatchTraversal.clone()).thenReturn(clonedMatchTraversal);
 
-        JoinStep js = new JoinStep(mockedParentTraversal, mockedMatchTraversal);
+        JoinStep js = new JoinStep(mockedParentTraversal, mockedMatchTraversal, Collections.emptySet());
         JoinStep clone = js.clone();
 
         assertEquals(1, clone.getLocalChildren().size());

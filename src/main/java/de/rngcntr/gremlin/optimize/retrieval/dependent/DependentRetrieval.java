@@ -143,7 +143,7 @@ public abstract class DependentRetrieval<E extends Element>  extends Retrieval<E
      */
     @Override
     public String toString() {
-        return String.format("via %d, Estimation: ~%d", getSource().getId(), estimatedSize);
+        return String.format("%d via %d, Estimation: ~%d", getElement().getId(), getSource().getId(), estimatedSize);
     }
 
     /**

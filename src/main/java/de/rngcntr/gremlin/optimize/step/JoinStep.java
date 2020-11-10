@@ -34,6 +34,7 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
 
     private boolean initialized;
     private Traversal.Admin<Map<String,Object>, Map<String,Object>> matchTraversal;
+    private final Set<String> joinAttributes;
 
     private List<Map<String,Object>> joinTuples;
 
@@ -43,10 +44,11 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
      * @param traversal The parent traversal that this step belongs to.
      * @param matchTraversal The inner traversal that supplies the set of tuples to join with.
      */
-    public JoinStep(Traversal.Admin<?,?> traversal, Traversal<Map<String,Object>, Map<String,Object>> matchTraversal) {
+    public JoinStep(Traversal.Admin<?,?> traversal, Traversal<Map<String,Object>, Map<String,Object>> matchTraversal, Set<String> joinAttributes) {
         super(traversal);
         this.initialized = false;
         this.matchTraversal = this.integrateChild(matchTraversal.asAdmin());
+        this.joinAttributes = joinAttributes;
     }
 
     /**
@@ -104,7 +106,7 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
 
     /**
      * Checks whether two {@link Map}s match. The definition of a match is that both do not contain conflicting
-     * information, i.e. different values for the same keys.
+     * information, i.e. different values for the same (join attribute) keys.
      *
      * @param a The first {@link Map}.
      * @param b The second {@link Map}.
@@ -114,8 +116,8 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
      * </ul>
      */
     private boolean match(Map<String,Object> a, Map<String,Object> b) {
-        for (String attr : a.keySet()) {
-            if (b.containsKey(attr) && a.get(attr) != b.get(attr)) {
+        for (String attr : joinAttributes) {
+            if (a.get(attr) != b.get(attr)) {
                 return false;
             }
         }
@@ -156,6 +158,6 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
      * @return A text representation of the join step.
      */
     public String toString() {
-        return String.format("JoinStep(%s)", matchTraversal);
+        return String.format("JoinStep({%s}, %s)", String.join(", ", joinAttributes), matchTraversal);
     }
 }

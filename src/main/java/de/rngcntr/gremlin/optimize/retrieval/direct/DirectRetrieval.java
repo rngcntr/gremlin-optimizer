@@ -66,6 +66,6 @@ public abstract class DirectRetrieval<E extends Element>  extends Retrieval<E> {
      */
     @Override
     public String toString() {
-        return String.format("Direct, Estimation: ~%d", estimatedSize);
+        return String.format("%d Direct, Estimation: ~%d", getElement().getId(), estimatedSize);
     }
 }

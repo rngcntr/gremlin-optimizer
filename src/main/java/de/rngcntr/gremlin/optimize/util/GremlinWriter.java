@@ -14,7 +14,9 @@
 
 package de.rngcntr.gremlin.optimize.util;
 
-import de.rngcntr.gremlin.optimize.retrieval.DependencyTree;
+import de.rngcntr.gremlin.optimize.query.DependencyTree;
+import de.rngcntr.gremlin.optimize.query.Join;
+import de.rngcntr.gremlin.optimize.query.PartialQueryPlan;
 import de.rngcntr.gremlin.optimize.retrieval.direct.DirectRetrieval;
 import de.rngcntr.gremlin.optimize.step.JoinStep;
 import de.rngcntr.gremlin.optimize.strategy.FlattenMatchStepStrategy;
@@ -22,7 +24,6 @@ import de.rngcntr.gremlin.optimize.structure.PatternElement;
 import de.rngcntr.gremlin.optimize.structure.PatternGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
-import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
 import java.util.*;
@@ -31,7 +32,7 @@ public class GremlinWriter {
 
     public static GraphTraversal<?,?> buildTraversal(PatternGraph pg) {
         Set<PatternElement<?>> directlyRetrieved = new HashSet<>();
-        Set<GraphTraversal<Map<String,Object>,Map<String,Object>>> joinedTraversals = new HashSet<>();
+        Set<DependencyTree> dependencyTrees = new HashSet<>();
 
         // find all directly retrievable elements
         pg.getElements().stream()
@@ -40,26 +41,30 @@ public class GremlinWriter {
 
         // build pattern matching queries for dependent retrievals
         for (PatternElement<?> baseElement : directlyRetrieved) {
-            final DependencyTree dependencyTree = new DependencyTree(baseElement.getBestRetrieval(), true);
-            joinedTraversals.add(dependencyTree.asMatchTraversal());
+            final DependencyTree dependencyTree = DependencyTree.of(baseElement.getBestRetrieval());
+            dependencyTrees.add(dependencyTree);
         }
 
-        GraphTraversal<Map<String,Object>,?> completeTraversal = joinTraversals(joinedTraversals, pg.getSourceGraph());
+        GraphTraversal<Map<String,Object>,?> completeTraversal = joinTraversals(dependencyTrees, pg.getSourceGraph());
 
         final GraphTraversal<?, Map<String, Object>> assembledTraversal = GremlinWriter.selectLabels(completeTraversal, pg.getElementsToReturn());
-        FlattenMatchStepStrategy.instance().apply(assembledTraversal.asAdmin());
+        // TODO: uncomment
+        // FlattenMatchStepStrategy.instance().apply(assembledTraversal.asAdmin());
         return assembledTraversal;
     }
 
-    private static GraphTraversal<Map<String,Object>,?> joinTraversals(Collection<GraphTraversal<Map<String,Object>, Map<String,Object>>> traversals, Graph g) {
-        Iterator<GraphTraversal<Map<String,Object>,Map<String,Object>>> joinedTraversalIterator = traversals.iterator();
-        assert joinedTraversalIterator.hasNext();
-        GraphTraversal<Map<String,Object>,?> completeTraversal = joinedTraversalIterator.next();
-        completeTraversal.asAdmin().setGraph(g);
-        while (joinedTraversalIterator.hasNext()) {
-            completeTraversal.asAdmin().addStep(new JoinStep(completeTraversal.asAdmin(), joinedTraversalIterator.next()));
+    private static GraphTraversal<Map<String,Object>,?> joinTraversals(Set<DependencyTree> dependencyTrees, Graph g) {
+        Iterator<DependencyTree> depTreeIterator = dependencyTrees.iterator();
+        assert depTreeIterator.hasNext();
+        PartialQueryPlan leftSide = depTreeIterator.next();
+        while (depTreeIterator.hasNext()) {
+            PartialQueryPlan rightSide = depTreeIterator.next();
+            leftSide = new Join(leftSide, rightSide);
         }
-        return completeTraversal;
+        System.out.println(leftSide);
+        final GraphTraversal<Map<String, Object>, Map<String, Object>> joinedTraversal = leftSide.asTraversal();
+        joinedTraversal.asAdmin().setGraph(g);
+        return joinedTraversal;
     }
 
     public static GraphTraversal<Map<String,Object>, Map<String, Object>> selectElements(GraphTraversal<Map<String,Object>,?> t, Collection<PatternElement<?>> elements, boolean alwaysMap) {
