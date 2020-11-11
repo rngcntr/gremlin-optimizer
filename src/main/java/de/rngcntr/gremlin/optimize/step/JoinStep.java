@@ -14,6 +14,7 @@
 
 package de.rngcntr.gremlin.optimize.step;
 
+import de.rngcntr.gremlin.optimize.query.JoinAttribute;
 import de.rngcntr.gremlin.optimize.traverser.FakePathTraverser;
 import de.rngcntr.gremlin.optimize.util.TraverserUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
@@ -23,6 +24,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.map.FlatMapStep;
 import org.apache.tinkerpop.gremlin.util.iterator.EmptyIterator;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This step provides support for the join operator in Gremlin. This implementation only supports full outer equality
@@ -39,7 +41,7 @@ public class JoinStep<E> extends FlatMapStep<E,Map<String,Object>> implements Tr
 
     private boolean initialized;
     private Traversal.Admin<Map<String,Object>, Map<String,Object>> matchTraversal;
-    private final Set<String> joinAttributes;
+    private final Set<JoinAttribute> joinAttributes;
 
     private List<Map<String,Object>> joinTuples;
 
@@ -49,7 +51,7 @@ public class JoinStep<E> extends FlatMapStep<E,Map<String,Object>> implements Tr
      * @param traversal The parent traversal that this step belongs to.
      * @param matchTraversal The inner traversal that supplies the set of tuples to join with.
      */
-    public JoinStep(Traversal.Admin<?,E> traversal, Traversal<E,?> matchTraversal, Set<String> joinAttributes) {
+    public JoinStep(Traversal.Admin<?,E> traversal, Traversal<E,?> matchTraversal, Set<JoinAttribute> joinAttributes) {
         super(traversal);
         this.initialized = false;
         this.matchTraversal = this.integrateChild(matchTraversal.asAdmin());
@@ -113,7 +115,7 @@ public class JoinStep<E> extends FlatMapStep<E,Map<String,Object>> implements Tr
         List<Map<String,Object>> results = new LinkedList<>();
 
         for (Map<String,Object> candidate : joinTuples) {
-            if (match(candidate, TraverserUtils.mapHistory(traverser))) {
+            if (match(TraverserUtils.mapHistory(traverser), candidate)) {
                 for (int i = 0; i < traverser.bulk(); ++i) {
                     results.add(merge(candidate, TraverserUtils.mapHistory(traverser)));
                 }
@@ -135,8 +137,8 @@ public class JoinStep<E> extends FlatMapStep<E,Map<String,Object>> implements Tr
      * </ul>
      */
     private boolean match(Map<String,Object> a, Map<String,Object> b) {
-        for (String attr : joinAttributes) {
-            if (a.get(attr) != b.get(attr)) {
+        for (JoinAttribute attr : joinAttributes) {
+            if (!attr.doMatch(a, b)) {
                 return false;
             }
         }
@@ -178,6 +180,7 @@ public class JoinStep<E> extends FlatMapStep<E,Map<String,Object>> implements Tr
      * @return A text representation of the join step.
      */
     public String toString() {
-        return String.format("JoinStep({%s}, %s)", String.join(", ", joinAttributes), matchTraversal);
+        return String.format("JoinStep({%s}, %s)",
+                joinAttributes.stream().map(String::valueOf).collect(Collectors.joining(", ")), matchTraversal);
     }
 }

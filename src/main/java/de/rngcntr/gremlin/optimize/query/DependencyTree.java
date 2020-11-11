@@ -2,10 +2,10 @@ package de.rngcntr.gremlin.optimize.query;
 
 import de.rngcntr.gremlin.optimize.retrieval.Retrieval;
 import de.rngcntr.gremlin.optimize.retrieval.dependent.DependentRetrieval;
-import de.rngcntr.gremlin.optimize.retrieval.direct.DirectEdgeRetrieval;
 import de.rngcntr.gremlin.optimize.retrieval.direct.DirectRetrieval;
 import de.rngcntr.gremlin.optimize.structure.PatternEdge;
 import de.rngcntr.gremlin.optimize.structure.PatternElement;
+import de.rngcntr.gremlin.optimize.structure.PatternVertex;
 import de.rngcntr.gremlin.optimize.util.GremlinWriter;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.DefaultGraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;;
@@ -76,7 +76,7 @@ public class DependencyTree implements PartialQueryPlan {
     }
 
     @Override
-    public Set<PartialQueryPlan> cut(Set<PatternElement<?>> elementsToKeep) {
+    public Set<PartialQueryPlan> generalCut(Set<PatternElement<?>> elementsToKeep) {
         Set<PartialQueryPlan> cutBranches = new HashSet<>();
         Set<DependencyTree> removedChildren = new HashSet<>();
 
@@ -87,7 +87,29 @@ public class DependencyTree implements PartialQueryPlan {
                 cutBranches.add(c);
                 removedChildren.add(c);
             } else {
-                cutBranches.addAll(c.cut(elementsToKeep));
+                cutBranches.addAll(c.generalCut(elementsToKeep));
+            }
+        });
+        children.removeAll(removedChildren);
+
+        return cutBranches;
+    }
+
+    @Override
+    public Set<DependencyTree> explicitCut(Set<PatternElement<?>> borderElements) {
+        Set<DependencyTree> cutBranches = new HashSet<>();
+        Set<DependencyTree> removedChildren = new HashSet<>();
+
+        children.forEach(c -> {
+            if (!c.children.isEmpty()) {
+                cutBranches.addAll(c.explicitCut(borderElements));
+            } else {
+                if (borderElements.contains(c.root.getElement())
+                        && c.getRoot().getElement() instanceof PatternVertex
+                        && c.getRoot() instanceof DependentRetrieval) {
+                    cutBranches.add(c);
+                    removedChildren.add(c);
+                }
             }
         });
         children.removeAll(removedChildren);
@@ -106,13 +128,8 @@ public class DependencyTree implements PartialQueryPlan {
         return getRecursive(Retrieval::getElement);
     }
 
-    public Set<PatternElement<?>> getRequiredElements() {
-        if (root instanceof DependentRetrieval) {
-            DependentRetrieval<?> dependentRoot = (DependentRetrieval<?>) root;
-            return Collections.singleton(dependentRoot.getSource());
-        } else {
-            return Collections.emptySet();
-        }
+    public Retrieval<?> getRoot() {
+        return root;
     }
 
     @Override

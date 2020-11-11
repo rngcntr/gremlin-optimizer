@@ -20,7 +20,12 @@ public class EmptyQueryPlan implements PartialQueryPlan {
     }
 
     @Override
-    public Set<PartialQueryPlan> cut(Set<PatternElement<?>> elementsToKeep) {
+    public Set<PartialQueryPlan> generalCut(Set<PatternElement<?>> elementsToKeep) {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public Set<DependencyTree> explicitCut(Set<PatternElement<?>> elementsToKeep) {
         return Collections.emptySet();
     }
 

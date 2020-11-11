@@ -14,8 +14,12 @@
 
 package de.rngcntr.gremlin.optimize.step;
 
+import de.rngcntr.gremlin.optimize.query.JoinAttribute;
+import de.rngcntr.gremlin.optimize.structure.PatternElement;
+import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
+import org.apache.tinkerpop.gremlin.process.traversal.step.util.ImmutablePath;
 import org.apache.tinkerpop.gremlin.process.traversal.util.DefaultTraversalSideEffects;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.junit.jupiter.api.Test;
@@ -35,54 +39,54 @@ public class JoinStepTests {
     private static Stream<Arguments> generateArguments() {
         return Stream.of(
                 Arguments.of(
-                        makeMap("a", 0),
-                        Collections.singletonList(makeMap("a", 0)),
-                        Collections.singletonList("a"),
-                        Collections.singletonList(makeMap("a", 0))
+                        makeMap("0", 0),
+                        Collections.singletonList(makeMap("0", 0)),
+                        Collections.singletonList("0"),
+                        Collections.singletonList(makeMap("0", 0))
                 ),
                 Arguments.of(
-                        makeMap("a", 0),
-                        Collections.singletonList(makeMap("b", 0)),
+                        makeMap("0", 0),
+                        Collections.singletonList(makeMap("1", 0)),
                         Collections.emptyList(),
-                        Collections.singletonList(makeMap("a", 0, "b", 0))
+                        Collections.singletonList(makeMap("0", 0, "1", 0))
                 ),
                 Arguments.of(
-                        makeMap("a", 0),
-                        Collections.singletonList(makeMap("a", 1)),
-                        Collections.singletonList("a"),
+                        makeMap("0", 0),
+                        Collections.singletonList(makeMap("0", 1)),
+                        Collections.singletonList("0"),
                         Collections.emptyList()
                 ),
                 Arguments.of(
-                        makeMap("a", 0),
-                        Collections.singletonList(makeMap("a", 1, "b", 2)),
-                        Collections.singletonList("a"),
+                        makeMap("0", 0),
+                        Collections.singletonList(makeMap("0", 1, "1", 2)),
+                        Collections.singletonList("0"),
                         Collections.emptyList()
                 ),
                 Arguments.of(
-                        makeMap("a", 0, "b", 2),
-                        Collections.singletonList(makeMap("a", 1, "b", 2)),
-                        Arrays.asList("a", "b"),
+                        makeMap("0", 0, "1", 2),
+                        Collections.singletonList(makeMap("0", 1, "1", 2)),
+                        Arrays.asList("0", "1"),
                         Collections.emptyList()
                 ),
                 Arguments.of(
-                        makeMap("a", 0),
-                        Arrays.asList(makeMap("a", 0, "b", 2), makeMap("a", 1, "b", 3)),
-                        Collections.singletonList("a"),
-                        Collections.singletonList(makeMap("a", 0, "b", 2))
+                        makeMap("0", 0),
+                        Arrays.asList(makeMap("0", 0, "1", 2), makeMap("0", 1, "1", 3)),
+                        Collections.singletonList("0"),
+                        Collections.singletonList(makeMap("0", 0, "1", 2))
                 ),
                 Arguments.of(
-                        makeMap("a", 0, "c", 4),
-                        Arrays.asList(makeMap("a", 0, "b", 2), makeMap("a", 1, "b", 3)),
-                        Arrays.asList("a"),
-                        Collections.singletonList(makeMap("a", 0, "b", 2, "c", 4))
+                        makeMap("0", 0, "2", 4),
+                        Arrays.asList(makeMap("0", 0, "1", 2), makeMap("0", 1, "1", 3)),
+                        Arrays.asList("0"),
+                        Collections.singletonList(makeMap("0", 0, "1", 2, "2", 4))
                 ),
                 Arguments.of(
-                        makeMap("a", 0, "c", 4),
-                        Arrays.asList(makeMap("a", 0, "b", 2), makeMap("a", 0, "b", 3)),
-                        Arrays.asList("a"),
+                        makeMap("0", 0, "2", 4),
+                        Arrays.asList(makeMap("0", 0, "1", 2), makeMap("0", 0, "1", 3)),
+                        Arrays.asList("0"),
                         Arrays.asList(
-                                makeMap("a", 0, "b", 2, "c", 4),
-                                makeMap("a", 0, "b", 3, "c", 4)
+                                makeMap("0", 0, "1", 2, "2", 4),
+                                makeMap("0", 0, "1", 3, "2", 4)
                         )
                 )
         );
@@ -98,21 +102,34 @@ public class JoinStepTests {
         Traversal innerTraversal = Mockito.mock(Traversal.class);
         Traversal.Admin innerTraversalAdmin = Mockito.mock(Traversal.Admin.class);
         Traverser.Admin traverser = Mockito.mock(Traverser.Admin.class);
+        Path path = ImmutablePath.make();
 
         Mockito.when(parentTraversal.getGraph()).thenReturn(Optional.of(graph));
         Mockito.when(innerTraversal.asAdmin()).thenReturn(innerTraversalAdmin);
         Mockito.when(innerTraversalAdmin.toList()).thenReturn(joinTuples);
         Mockito.when(traverser.get()).thenReturn(traverserContent);
+        Mockito.when(traverser.path()).thenReturn(path);
+        Mockito.when(traverser.bulk()).thenReturn(1L); // TODO integrate into test cases
         Mockito.when(innerTraversalAdmin.getSideEffects()).thenReturn(new DefaultTraversalSideEffects());
         Mockito.when(innerTraversalAdmin.clone()).thenReturn(innerTraversalAdmin);
 
-        JoinStep js = new JoinStep(parentTraversal, innerTraversal, new HashSet(joinAttributes));
+        JoinStep js = new JoinStep(parentTraversal, innerTraversal, makeJoinAttributes(joinAttributes));
         Iterator result = js.flatMap(traverser);
 
         assertEqualsIterators(expectedResults.iterator(), result);
         Mockito.verify(innerTraversalAdmin, Mockito.times(1)).toList();
         assertEquals(1, js.getLocalChildren().size());
         assertEquals(innerTraversalAdmin, js.getLocalChildren().get(0));
+    }
+
+    private Set<JoinAttribute> makeJoinAttributes(Collection<String> joinAttributes) {
+        HashSet<JoinAttribute> s = new HashSet<>();
+        joinAttributes.forEach(idString -> {
+            PatternElement<?> pe = Mockito.mock(PatternElement.class);
+            Mockito.when(pe.getId()).thenReturn(Long.parseLong(idString));
+            s.add(new JoinAttribute(pe));
+        });
+        return s;
     }
 
     @Test

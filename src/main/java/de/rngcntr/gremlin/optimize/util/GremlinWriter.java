@@ -60,7 +60,6 @@ public class GremlinWriter {
             PartialQueryPlan rightSide = depTreeIterator.next();
             leftSide = new Join(leftSide, rightSide);
         }
-        System.out.println(leftSide);
         final GraphTraversal<Map<String,Object>,Map<String,Object>> joinedTraversal = leftSide.asTraversal();
         joinedTraversal.asAdmin().setGraph(g);
         return joinedTraversal;
