@@ -63,13 +63,15 @@ public class DependencyTree implements PartialQueryPlan {
             allRetrievals.remove(root);
         } else {
             assembledTraversal = new DefaultGraphTraversal<>();
-            //final DependentRetrieval<?> dependentRoot = (DependentRetrieval<?>) root;
-            //assembledTraversal.select(String.valueOf(dependentRoot.getSource().getId()));
+            final DependentRetrieval<?> dependentRoot = (DependentRetrieval<?>) root;
+            assembledTraversal.select(String.valueOf(dependentRoot.getSource().getId()));
         }
         if (allRetrievals.size() > 0) {
             assembledTraversal = assembledTraversal.match(allRetrievals.stream()
                     .map(Retrieval::asTraversal).toArray(GraphTraversal[]::new));
         }
+
+        // TODO: maybe better select all elements from the assembled traversal (using TraversalHelper)
         return GremlinWriter.selectElements(assembledTraversal, getElements(), true);
     }
 
@@ -102,6 +104,15 @@ public class DependencyTree implements PartialQueryPlan {
     @Override
     public Set<PatternElement<?>> getElements() {
         return getRecursive(Retrieval::getElement);
+    }
+
+    public Set<PatternElement<?>> getRequiredElements() {
+        if (root instanceof DependentRetrieval) {
+            DependentRetrieval<?> dependentRoot = (DependentRetrieval<?>) root;
+            return Collections.singleton(dependentRoot.getSource());
+        } else {
+            return Collections.emptySet();
+        }
     }
 
     @Override

@@ -60,11 +60,17 @@ public class Join implements PartialQueryPlan {
         final GraphTraversal.Admin<Map<String, Object>, Map<String, Object>> rightAdmin = right.asTraversal().asAdmin();
         final JoinStep joinStep = new JoinStep(leftAdmin, rightAdmin,
                 joinAttributes.stream().map(PatternElement::getId).map(String::valueOf).collect(Collectors.toSet()));
-        GremlinWriter.selectElements(leftAdmin, left.getElements(), true);
         leftAdmin.addStep(joinStep);
+
+        final Set<PatternElement<?>> elementsToSelect = left.getElements();
+        elementsToSelect.addAll(right.getElements());
+        //GremlinWriter.selectElements(leftAdmin, elementsToSelect, true);
         after.forEach(pqp -> {
-            TraversalHelper.insertTraversal(joinStep, pqp.asTraversal().asAdmin(), leftAdmin);
-            //leftAdmin.match(pqp.asTraversal());
+            if (pqp instanceof DependencyTree) {
+                //GremlinWriter.selectElements(leftAdmin, ((DependencyTree) pqp).getRequiredElements(), false);
+                //GremlinWriter.selectElements(leftAdmin, elementsToSelect, true);
+            }
+            TraversalHelper.insertTraversal(leftAdmin.getEndStep(), pqp.asTraversal().asAdmin(), leftAdmin);
         });
         //return GremlinWriter.selectElements(leftAdmin, getElements(), true);
         return leftAdmin;

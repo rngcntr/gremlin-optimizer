@@ -14,10 +14,13 @@
 
 package de.rngcntr.gremlin.optimize.step;
 
+import de.rngcntr.gremlin.optimize.traverser.FakePathTraverser;
+import de.rngcntr.gremlin.optimize.util.TraverserUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 import org.apache.tinkerpop.gremlin.process.traversal.step.TraversalParent;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.FlatMapStep;
+import org.apache.tinkerpop.gremlin.util.iterator.EmptyIterator;
 
 import java.util.*;
 
@@ -30,7 +33,9 @@ import java.util.*;
  *
  * @author Florian Grieskamp
  */
-public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>> implements TraversalParent {
+public class JoinStep<E> extends FlatMapStep<E,Map<String,Object>> implements TraversalParent {
+
+    private Iterator<Map<String,Object>> iterator = EmptyIterator.instance();
 
     private boolean initialized;
     private Traversal.Admin<Map<String,Object>, Map<String,Object>> matchTraversal;
@@ -44,7 +49,7 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
      * @param traversal The parent traversal that this step belongs to.
      * @param matchTraversal The inner traversal that supplies the set of tuples to join with.
      */
-    public JoinStep(Traversal.Admin<?,?> traversal, Traversal<Map<String,Object>, Map<String,Object>> matchTraversal, Set<String> joinAttributes) {
+    public JoinStep(Traversal.Admin<?,E> traversal, Traversal<E,?> matchTraversal, Set<String> joinAttributes) {
         super(traversal);
         this.initialized = false;
         this.matchTraversal = this.integrateChild(matchTraversal.asAdmin());
@@ -62,6 +67,18 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
         return Collections.singletonList(matchTraversal);
     }
 
+    @Override
+    protected Traverser.Admin<Map<String,Object>> processNextStart() {
+        while (true) {
+            if (this.iterator.hasNext()) {
+                return new FakePathTraverser(this.iterator.next(), this.getNextStep(), 1L);
+            } else {
+                closeIterator();
+                this.iterator = this.flatMap(this.starts.next());
+            }
+        }
+    }
+
     /**
      * The first call initializes the step by executing the nested traversal and collecting it's result.
      * In addition, every call performs the inner loop of a nested loops join on the supplied traverser.
@@ -70,7 +87,7 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
      * @return The joined mappings for the input traverser.
      */
     @Override
-    protected Iterator<Map<String,Object>> flatMap(Traverser.Admin<Map<String,Object>> traverser) {
+    protected Iterator<Map<String,Object>> flatMap(Traverser.Admin<E> traverser) {
         if (!initialized) {
             initialize();
         }
@@ -92,12 +109,14 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
      * @param traverser The input element that is checked against all join candidates from the inner traversal.
      * @return The joined mappings for the input traverser.
      */
-    private Iterator<Map<String,Object>> doNestedLoopsJoin(Traverser.Admin<Map<String,Object>> traverser) {
+    private Iterator<Map<String,Object>> doNestedLoopsJoin(Traverser.Admin<E> traverser) {
         List<Map<String,Object>> results = new LinkedList<>();
 
         for (Map<String,Object> candidate : joinTuples) {
-            if (match(candidate, traverser.get())) {
-                results.add(merge(candidate, traverser.get()));
+            if (match(candidate, TraverserUtils.mapHistory(traverser))) {
+                for (int i = 0; i < traverser.bulk(); ++i) {
+                    results.add(merge(candidate, TraverserUtils.mapHistory(traverser)));
+                }
             }
         }
 
@@ -146,9 +165,10 @@ public class JoinStep extends FlatMapStep<Map<String,Object>, Map<String,Object>
      * @return The cloned join step.
      */
     @Override
-    public JoinStep clone() {
-        final JoinStep clone = (JoinStep) super.clone();
+    public JoinStep<E> clone() {
+        final JoinStep<E> clone = (JoinStep<E>) super.clone();
         clone.matchTraversal = this.matchTraversal.clone();
+        clone.matchTraversal.reset();
         return clone;
     }
 

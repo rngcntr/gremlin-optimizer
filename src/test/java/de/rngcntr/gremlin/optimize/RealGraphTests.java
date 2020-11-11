@@ -16,22 +16,18 @@ package de.rngcntr.gremlin.optimize;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
-import de.rngcntr.gremlin.optimize.filter.LabelFilter;
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
 import de.rngcntr.gremlin.optimize.structure.PatternGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mockito;
 
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -73,7 +69,10 @@ public class RealGraphTests {
 
     private static Stream<Arguments> testedTraversals() {
         return Stream.of(
-                /*
+                Arguments.of(2, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
+                        g.V().has("name", "marko").as("a").out("knows").as("b").select("a").select("a", "b")),
+                Arguments.of(1, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
+                        g.V().has("name", "marko").as("a").out("created").as("b").select("a").select("a", "b")),
                 Arguments.of(6, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
                         g.V()),
                 Arguments.of(1, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
@@ -93,7 +92,6 @@ public class RealGraphTests {
                         g.V()
                                 .hasLabel("person")
                                 .outE("created").has("weight", 1.0)),
-                */
                 Arguments.of(0, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
                         g.V()
                                 .hasLabel("person")
@@ -138,18 +136,6 @@ public class RealGraphTests {
     @MethodSource("testedTraversals")
     public void testTraversalWithDefaultStatistics(int numExpectedResults, Function<GraphTraversalSource, GraphTraversal<?,?>> t){
         StatisticsProvider stats = mock(StatisticsProvider.class);
-
-        // TODO delete all of this
-        Mockito.when(stats.totals(Edge.class)).thenReturn(0L);
-        LabelFilter<Vertex> personLabel = new LabelFilter(Vertex.class, "person");
-        LabelFilter<Vertex> softwareLabel = new LabelFilter(Vertex.class, "software");
-        LabelFilter<Edge> createdLabel = new LabelFilter(Edge.class, "created");
-        Mockito.when(stats.withLabel(personLabel)).thenReturn(0L);
-        Mockito.when(stats.withLabel(createdLabel)).thenReturn(0L);
-        Mockito.when(stats.withLabel(softwareLabel)).thenReturn(0L);
-        Mockito.when(stats.connections(personLabel, createdLabel)).thenReturn(0L);
-        Mockito.when(stats.connections(createdLabel, softwareLabel)).thenReturn(0L);
-
         assertSameResultAfterOptimization(t.apply(g), stats, numExpectedResults);
     }
 }

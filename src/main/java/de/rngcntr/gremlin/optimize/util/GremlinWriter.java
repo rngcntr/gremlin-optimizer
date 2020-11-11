@@ -45,15 +45,14 @@ public class GremlinWriter {
             dependencyTrees.add(dependencyTree);
         }
 
-        GraphTraversal<Map<String,Object>,?> completeTraversal = joinTraversals(dependencyTrees, pg.getSourceGraph());
+        GraphTraversal<Map<String,Object>,Map<String,Object>> completeTraversal = joinTraversals(dependencyTrees, pg.getSourceGraph());
 
         final GraphTraversal<?, Map<String, Object>> assembledTraversal = GremlinWriter.selectLabels(completeTraversal, pg.getElementsToReturn());
-        // TODO: uncomment
-        // FlattenMatchStepStrategy.instance().apply(assembledTraversal.asAdmin());
+        FlattenMatchStepStrategy.instance().apply(assembledTraversal.asAdmin());
         return assembledTraversal;
     }
 
-    private static GraphTraversal<Map<String,Object>,?> joinTraversals(Set<DependencyTree> dependencyTrees, Graph g) {
+    private static GraphTraversal<Map<String,Object>,Map<String,Object>> joinTraversals(Set<DependencyTree> dependencyTrees, Graph g) {
         Iterator<DependencyTree> depTreeIterator = dependencyTrees.iterator();
         assert depTreeIterator.hasNext();
         PartialQueryPlan leftSide = depTreeIterator.next();
@@ -62,7 +61,7 @@ public class GremlinWriter {
             leftSide = new Join(leftSide, rightSide);
         }
         System.out.println(leftSide);
-        final GraphTraversal<Map<String, Object>, Map<String, Object>> joinedTraversal = leftSide.asTraversal();
+        final GraphTraversal<Map<String,Object>,Map<String,Object>> joinedTraversal = leftSide.asTraversal();
         joinedTraversal.asAdmin().setGraph(g);
         return joinedTraversal;
     }
@@ -85,13 +84,13 @@ public class GremlinWriter {
         }
     }
 
-    private static GraphTraversal<?, Map<String, Object>> selectLabels(GraphTraversal<Map<String,Object>,?> t, Map<PatternElement<?>, String> mappedElements) {
+    private static GraphTraversal<Map<String,Object>, Map<String, Object>> selectLabels(GraphTraversal<Map<String,Object>,Map<String,Object>> t, Map<PatternElement<?>, String> mappedElements) {
         List<PatternElement<?>> elements = new ArrayList<>(mappedElements.keySet());
         String[] externalLabels = elements.stream()
                 .map(mappedElements::get)
                 .toArray(String[]::new);
 
-        GraphTraversal<?, Map<String, Object>> projectedTraversal;
+        GraphTraversal<Map<String,Object>, Map<String, Object>> projectedTraversal;
 
         /*
          * apply project step
