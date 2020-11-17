@@ -20,8 +20,8 @@ import de.rngcntr.gremlin.optimize.structure.PatternEdge;
 import de.rngcntr.gremlin.optimize.structure.PatternElement;
 import de.rngcntr.gremlin.optimize.structure.PatternVertex;
 import org.apache.tinkerpop.gremlin.process.traversal.Step;
+import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
-import org.apache.tinkerpop.gremlin.process.traversal.step.Scoping;
 import org.apache.tinkerpop.gremlin.process.traversal.step.filter.HasStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.*;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.EmptyStep;
@@ -41,6 +41,8 @@ public class GremlinParser {
     private List<PatternElement<?>> elements;
     private Map<String, PatternElement<?>> stepLabelMap;
     private Map<PatternElement<?>, String> elementsToReturn;
+    private Map<PatternElement<?>, String> matchResults;
+    private boolean collectMatchResults = false;
 
     public void parse(GraphTraversal<?,?> traversal) {
         this.traversal = traversal;
@@ -48,6 +50,7 @@ public class GremlinParser {
         stepLabelMap = new HashMap<>();
         currentStepStack = new Stack<>();
         elementsToReturn = new HashMap<>();
+        matchResults = new HashMap<>();
         currentElementStack = new Stack<>();
 
         currentElementStack.push(null);
@@ -63,6 +66,10 @@ public class GremlinParser {
         return currentStepStack.isEmpty();
     }
 
+    private boolean isLastStep() {
+        return currentStepStack.size() == 1 && currentStepStack.peek() == EmptyStep.instance();
+    }
+
     private Step<?,?> advance() {
         Step<?,?> currentStep = currentStepStack.pop();
 
@@ -72,12 +79,17 @@ public class GremlinParser {
                 // end of traversal
                 assert currentElement != null;
                 if (elementsToReturn.isEmpty()) {
-                    // if no select step was parsed, return the last element
+                    // if no select step was parsed, try to return the results of the last match step
+                    elementsToReturn = matchResults;
+                }
+                if (elementsToReturn.isEmpty()) {
+                    // if no match step was parsed, return the last element
                     elementsToReturn.put(currentElement, String.valueOf(currentElement.getId()));
                 }
             }
         } else {
             currentStepStack.push(currentStep.getNextStep());
+            elementsToReturn = new HashMap<>();
         }
 
         return currentStep;
@@ -107,7 +119,13 @@ public class GremlinParser {
         } else if (currentStep instanceof SelectOneStep) {
             parseSelectStep((SelectOneStep<?,?>) currentStep);
         } else if (currentStep instanceof SelectStep) {
-            parseSelectStep((SelectStep<?,?>) currentStep);
+            parseSelectStep((SelectStep<?, ?>) currentStep);
+        } else if (currentStep instanceof MatchStep) {
+            parseMatchStep((MatchStep<?,?>) currentStep);
+        } else if (currentStep instanceof MatchStep.MatchStartStep) {
+            parseMatchStartStep((MatchStep.MatchStartStep) currentStep);
+        } else if (currentStep instanceof MatchStep.MatchEndStep) {
+            parseMatchEndStep((MatchStep.MatchEndStep) currentStep);
         } else {
             throw new IllegalArgumentException("Unsupported step: " + currentStep);
         }
@@ -234,5 +252,77 @@ public class GremlinParser {
 
         elements.add(newVertex);
         currentElementStack.push(newVertex);
+    }
+
+    private void parseMatchStep(MatchStep<?,?> matchStep) {
+        if (isLastStep()) {
+            // TODO Note: This breaks support for nested match steps
+            collectMatchResults = true;
+        }
+        if (!matchStep.getGlobalChildren().isEmpty()) {
+            orderChildTraversals(matchStep).forEach(c -> currentStepStack.push(c.getStartStep()));
+        }
+    }
+
+    private List<Traversal.Admin<Object,Object>> orderChildTraversals(MatchStep<?,?> matchStep) {
+        List<Traversal.Admin<Object, Object>> children = new ArrayList<>(matchStep.getGlobalChildren());
+        List<Traversal.Admin<Object, Object>> orderedChildren = new ArrayList<>();
+
+        Set<String> knownLabels = new HashSet<>(stepLabelMap.keySet());
+
+        int stillLeft = children.size();
+        while (!children.isEmpty()) {
+            Iterator<Traversal.Admin<Object, Object>> it = children.iterator();
+            while (it.hasNext()) {
+                Traversal.Admin<Object, Object> currentChild = it.next();
+                MatchStep.MatchStartStep startStep = (MatchStep.MatchStartStep) currentChild.getStartStep();
+                MatchStep.MatchEndStep endStep = (MatchStep.MatchEndStep) currentChild.getEndStep();
+                if (startStep.getSelectKey().isPresent() && knownLabels.contains(startStep.getSelectKey().get())) {
+                    orderedChildren.add(currentChild);
+                    if (endStep.getMatchKey().isPresent()) {
+                        knownLabels.add(endStep.getMatchKey().get());
+                    }
+                    it.remove();
+                }
+            }
+            if (children.size() == stillLeft) {
+                throw new IllegalArgumentException("MatchStep is not solvable: " + matchStep);
+            }
+            stillLeft = children.size();
+        }
+
+        Collections.reverse(orderedChildren);
+        return orderedChildren;
+    }
+
+    private void parseMatchStartStep(MatchStep.MatchStartStep matchStartStep) {
+        Optional<String> key = matchStartStep.getSelectKey();
+        if (key.isPresent()) {
+            String label = key.get();
+            if (stepLabelMap.containsKey(label)) {
+                currentElementStack.push(stepLabelMap.get(label));
+                if (collectMatchResults) {
+                    matchResults.put(currentElementStack.peek(), key.get());
+                }
+            } else {
+                throw new IllegalArgumentException("Trying to access step label " + label + " which has not been set.");
+            }
+        } else {
+            currentElementStack.push(currentElementStack.peek());
+        }
+    }
+
+    private void parseMatchEndStep(MatchStep.MatchEndStep matchEndStep) {
+        Optional<String> key = matchEndStep.getMatchKey();
+        if (key.isPresent()) {
+            if (!stepLabelMap.containsKey(key.get())) {
+                stepLabelMap.put(key.get(), currentElementStack.peek());
+                if (collectMatchResults) {
+                    matchResults.put(currentElementStack.peek(), key.get());
+                }
+            } else {
+                throw new IllegalArgumentException("Double assignment of step label " + key.get() + " is currently unsupported.");
+            }
+        }
     }
 }

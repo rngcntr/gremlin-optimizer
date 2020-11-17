@@ -21,6 +21,7 @@ import de.rngcntr.gremlin.optimize.structure.PatternGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerFactory;
 import org.junit.jupiter.api.Assertions;
@@ -128,7 +129,31 @@ public class RealGraphTests {
                         g.V()
                                 .hasLabel("person")
                                 .out("created")
-                                .hasLabel("software"))
+                                .hasLabel("software")),
+                Arguments.of(4, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
+                        g.V().as("a")
+                                .match(__.as("a").hasLabel("person"))),
+                Arguments.of(4, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
+                        g.V().as("a")
+                                .match(
+                                        __.as("a").hasLabel("person"),
+                                        __.as("a").out("created").as("b")
+                                )),
+                Arguments.of(4, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
+                        g.V().as("a")
+                                .match(
+                                        __.as("a").out("created").as("b"),
+                                        __.as("a").hasLabel("person")
+                                )),
+                Arguments.of(3, (Function<GraphTraversalSource, GraphTraversal<?,?>>) g ->
+                        g.V().as("a")
+                                .match(
+                                        __.as("a").out("created").as("b"),
+                                        __.as("a").hasLabel("person"),
+                                        __.as("b").in("created").as("c"),
+                                        __.as("c").has("name", "peter")
+                                )
+                                .select("a"))
         );
     }
 
