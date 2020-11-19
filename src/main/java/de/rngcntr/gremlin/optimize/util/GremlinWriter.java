@@ -18,8 +18,10 @@ import de.rngcntr.gremlin.optimize.query.DependencyTree;
 import de.rngcntr.gremlin.optimize.query.Join;
 import de.rngcntr.gremlin.optimize.query.PartialQueryPlan;
 import de.rngcntr.gremlin.optimize.retrieval.direct.DirectRetrieval;
-import de.rngcntr.gremlin.optimize.step.JoinStep;
 import de.rngcntr.gremlin.optimize.strategy.FlattenMatchStepStrategy;
+import de.rngcntr.gremlin.optimize.strategy.RemoveRedundantSelectStrategy;
+import de.rngcntr.gremlin.optimize.strategy.RemoveUnusedLabelsStrategy;
+import de.rngcntr.gremlin.optimize.strategy.SkipEdgeStrategy;
 import de.rngcntr.gremlin.optimize.structure.PatternElement;
 import de.rngcntr.gremlin.optimize.structure.PatternGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -45,14 +47,17 @@ public class GremlinWriter {
             dependencyTrees.add(dependencyTree);
         }
 
-        GraphTraversal<Map<String,Object>,Map<String,Object>> completeTraversal = joinTraversals(dependencyTrees, pg.getSourceGraph());
+        GraphTraversal<?,?> completeTraversal = joinTraversals(dependencyTrees, pg.getSourceGraph());
 
-        final GraphTraversal<?, Map<String, Object>> assembledTraversal = GremlinWriter.selectLabels(completeTraversal, pg.getElementsToReturn());
+        final GraphTraversal<?,?> assembledTraversal = GremlinWriter.selectLabels(completeTraversal, pg.getElementsToReturn());
         FlattenMatchStepStrategy.instance().apply(assembledTraversal.asAdmin());
+        RemoveRedundantSelectStrategy.instance().apply(assembledTraversal.asAdmin());
+        RemoveUnusedLabelsStrategy.instance().apply(assembledTraversal.asAdmin());
+        SkipEdgeStrategy.instance().apply(assembledTraversal.asAdmin());
         return assembledTraversal;
     }
 
-    private static GraphTraversal<Map<String,Object>,Map<String,Object>> joinTraversals(Set<DependencyTree> dependencyTrees, Graph g) {
+    private static GraphTraversal<?,?> joinTraversals(Set<DependencyTree> dependencyTrees, Graph g) {
         Iterator<DependencyTree> depTreeIterator = dependencyTrees.iterator();
         assert depTreeIterator.hasNext();
         PartialQueryPlan leftSide = depTreeIterator.next();
@@ -60,12 +65,12 @@ public class GremlinWriter {
             PartialQueryPlan rightSide = depTreeIterator.next();
             leftSide = new Join(leftSide, rightSide);
         }
-        final GraphTraversal<Map<String,Object>,Map<String,Object>> joinedTraversal = leftSide.asTraversal();
+        final GraphTraversal<?,?> joinedTraversal = leftSide.asTraversal();
         joinedTraversal.asAdmin().setGraph(g);
         return joinedTraversal;
     }
 
-    public static GraphTraversal<Map<String,Object>, Map<String, Object>> selectElements(GraphTraversal<Map<String,Object>,?> t, Collection<PatternElement<?>> elements, boolean alwaysMap) {
+    public static GraphTraversal<?,?> selectElements(GraphTraversal<?,?> t, Collection<PatternElement<?>> elements, boolean alwaysMap) {
         String[] internalLabels = elements.stream()
                 .map(PatternElement::getId)
                 .map(String::valueOf)
@@ -83,13 +88,13 @@ public class GremlinWriter {
         }
     }
 
-    private static GraphTraversal<Map<String,Object>, Map<String, Object>> selectLabels(GraphTraversal<Map<String,Object>,Map<String,Object>> t, Map<PatternElement<?>, String> mappedElements) {
+    private static GraphTraversal<?,?> selectLabels(GraphTraversal<?,?> t, Map<PatternElement<?>, String> mappedElements) {
         List<PatternElement<?>> elements = new ArrayList<>(mappedElements.keySet());
         String[] externalLabels = elements.stream()
                 .map(mappedElements::get)
                 .toArray(String[]::new);
 
-        GraphTraversal<Map<String,Object>, Map<String, Object>> projectedTraversal;
+        GraphTraversal<?,?> projectedTraversal;
 
         /*
          * apply project step

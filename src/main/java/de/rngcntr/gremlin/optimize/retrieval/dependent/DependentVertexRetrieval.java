@@ -55,8 +55,8 @@ public class DependentVertexRetrieval extends DependentRetrieval<Vertex> {
      * @return The local Gremlin traversal.
      */
     @Override
-    protected GraphTraversal<Map<String,Object>, Vertex> getBaseTraversal() {
-        GraphTraversal.Admin<Map<String,Object>, Vertex> t = new DefaultGraphTraversal<>();
+    protected GraphTraversal<?, Vertex> getBaseTraversal() {
+        GraphTraversal.Admin<?, Vertex> t = new DefaultGraphTraversal<>();
         t = t.as(String.valueOf(source.getId())).asAdmin();
         t.addStep(new EdgeVertexStep(t, direction));
         return t;

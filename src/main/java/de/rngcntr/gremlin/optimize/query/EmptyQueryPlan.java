@@ -5,7 +5,6 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.DefaultGraphTrav
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 public class EmptyQueryPlan implements PartialQueryPlan {
@@ -15,7 +14,7 @@ public class EmptyQueryPlan implements PartialQueryPlan {
     }
 
     @Override
-    public GraphTraversal<Map<String, Object>, Map<String, Object>> asTraversal() {
+    public GraphTraversal<Object, Object> asTraversal() {
         return new DefaultGraphTraversal<>();
     }
 

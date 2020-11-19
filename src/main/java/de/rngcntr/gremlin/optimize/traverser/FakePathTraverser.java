@@ -1,5 +1,6 @@
 package de.rngcntr.gremlin.optimize.traverser;
 
+import de.rngcntr.gremlin.optimize.util.TraverserUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.Step;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.ImmutablePath;
 import org.apache.tinkerpop.gremlin.process.traversal.traverser.B_LP_O_S_SE_SL_Traverser;
@@ -8,11 +9,11 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-public class FakePathTraverser extends B_LP_O_S_SE_SL_Traverser<Map<String,Object>> {
+public class FakePathTraverser<E> extends B_LP_O_S_SE_SL_Traverser<E> {
 
-    public FakePathTraverser(final Map<String,Object> t, final Step<Map<String,Object>, ?> step, final long initialBulk) {
-        super(t, step, initialBulk);
-        setPathFromMap(t);
+    public FakePathTraverser(final E location, final Map<String,Object> path, final Step<E, ?> step, final long initialBulk) {
+        super(location, step, initialBulk);
+        setPathFromMap(path);
         final Set<String> labels = step.getLabels();
         if (!labels.isEmpty()) this.path = this.path.extend(t, labels);
     }
@@ -25,6 +26,6 @@ public class FakePathTraverser extends B_LP_O_S_SE_SL_Traverser<Map<String,Objec
     }
 
     public String toString() {
-        return "FakeTraverser";
+        return String.format("(location=%s, path=%s)", t, TraverserUtils.mapHistory(this));
     }
 }

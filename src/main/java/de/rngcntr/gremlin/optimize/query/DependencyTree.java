@@ -41,7 +41,7 @@ public class DependencyTree implements PartialQueryPlan {
                 alreadyCoveredElements.add(((DependentRetrieval<?>) rootElement.getBestRetrieval()).getSource());
             }
             rootElement.getNeighbors(Direction.BOTH).stream()
-                    .filter(pe -> !alreadyCoveredElements.stream().anyMatch(coveredElem -> coveredElem.getId() == pe.getId()))
+                    .filter(pe -> alreadyCoveredElements.stream().noneMatch(coveredElem -> coveredElem.getId() == pe.getId()))
                     .forEach(pe -> {
                             assert pe.getDependentRetrieval(rootElement).isPresent();
                             tree.children.add(new DependencyTree(pe.getDependentRetrieval(rootElement).get()));
@@ -55,9 +55,9 @@ public class DependencyTree implements PartialQueryPlan {
         return set;
     }
 
-    public GraphTraversal<Map<String, Object>, Map<String, Object>> asTraversal() {
+    public GraphTraversal<Object, Object> asTraversal() {
         final Set<Retrieval<?>> allRetrievals = getRecursive(ret -> ret);
-        GraphTraversal<Map<String,Object>,?> assembledTraversal;
+        GraphTraversal<?,?> assembledTraversal;
         if (root instanceof DirectRetrieval) {
             assembledTraversal = root.asTraversal();
             allRetrievals.remove(root);
@@ -71,8 +71,8 @@ public class DependencyTree implements PartialQueryPlan {
                     .map(Retrieval::asTraversal).toArray(GraphTraversal[]::new));
         }
 
-        // TODO: maybe better select all elements from the assembled traversal (using TraversalHelper)
-        return GremlinWriter.selectElements(assembledTraversal, getElements(), true);
+        //return (GraphTraversal<Object, Object>) GremlinWriter.selectElements(assembledTraversal, getElements(), true);
+        return (GraphTraversal<Object, Object>) assembledTraversal;
     }
 
     @Override

@@ -21,6 +21,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 import org.apache.tinkerpop.gremlin.process.traversal.step.TraversalParent;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.FlatMapStep;
+import org.apache.tinkerpop.gremlin.process.traversal.traverser.TraverserRequirement;
 import org.apache.tinkerpop.gremlin.util.iterator.EmptyIterator;
 
 import java.util.*;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 public class JoinStep<E> extends FlatMapStep<E,Map<String,Object>> implements TraversalParent {
 
     private Iterator<Map<String,Object>> iterator = EmptyIterator.instance();
+    private Traverser.Admin<E> currentStart;
 
     private boolean initialized;
     private Traversal.Admin<Map<String,Object>, Map<String,Object>> matchTraversal;
@@ -58,6 +60,15 @@ public class JoinStep<E> extends FlatMapStep<E,Map<String,Object>> implements Tr
         this.joinAttributes = joinAttributes;
     }
 
+    @Override
+    public Set<TraverserRequirement> getRequirements() {
+        return this.getSelfAndChildRequirements(TraverserRequirement.PATH);
+    }
+
+    public Set<JoinAttribute> getJoinAttributes() {
+        return joinAttributes;
+    }
+
     /**
      * Gets the inner traversal of the join.
      *
@@ -73,10 +84,11 @@ public class JoinStep<E> extends FlatMapStep<E,Map<String,Object>> implements Tr
     protected Traverser.Admin<Map<String,Object>> processNextStart() {
         while (true) {
             if (this.iterator.hasNext()) {
-                return new FakePathTraverser(this.iterator.next(), this.getNextStep(), 1L);
+                return new FakePathTraverser(currentStart.get(), this.iterator.next(), this.getNextStep(), 1L);
             } else {
                 closeIterator();
-                this.iterator = this.flatMap(this.starts.next());
+                currentStart = this.starts.next();
+                this.iterator = this.flatMap(currentStart);
             }
         }
     }
@@ -101,7 +113,10 @@ public class JoinStep<E> extends FlatMapStep<E,Map<String,Object>> implements Tr
      * Executes the inner traversal and collects it's results.
      */
     private void initialize() {
-        joinTuples = matchTraversal.toList();
+        joinTuples = new ArrayList<>();
+        while (matchTraversal.asAdmin().hasNext()) {
+            joinTuples.add(TraverserUtils.mapHistory(matchTraversal.asAdmin().nextTraverser()));
+        }
         initialized = true;
     }
 

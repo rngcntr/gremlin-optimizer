@@ -43,7 +43,7 @@ public class DirectVertexRetrievalTests {
         DirectVertexRetrieval r = Mockito.mock(DirectVertexRetrieval.class,
                 Mockito.withSettings().useConstructor(v).defaultAnswer(Mockito.CALLS_REAL_METHODS));
 
-        final GraphTraversal<Map<String,Object>, Vertex> baseTraversal = r.getBaseTraversal();
+        final GraphTraversal<Vertex, Vertex> baseTraversal = r.getBaseTraversal();
 
         assertEquals(1, baseTraversal.asAdmin().getSteps().size());
         assertTrue(baseTraversal.asAdmin().getStartStep() instanceof GraphStep);

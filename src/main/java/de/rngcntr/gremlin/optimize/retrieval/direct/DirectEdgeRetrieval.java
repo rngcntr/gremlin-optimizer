@@ -45,9 +45,9 @@ public class DirectEdgeRetrieval extends DirectRetrieval<Edge> {
      * @return The global Gremlin traversal.
      */
     @Override
-    protected GraphTraversal<Map<String,Object>, Edge> getBaseTraversal() {
-        GraphTraversal.Admin<Map<String,Object>,Edge> t = new DefaultGraphTraversal<>();
-        t.addStep(new GraphStep<Map<String,Object>,Edge>(t, Edge.class, true));
+    protected GraphTraversal<Edge, Edge> getBaseTraversal() {
+        GraphTraversal.Admin<Edge, Edge> t = new DefaultGraphTraversal<>();
+        t.addStep(new GraphStep<Edge, Edge>(t, Edge.class, true));
         return t;
     }
 }

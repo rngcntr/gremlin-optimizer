@@ -82,9 +82,9 @@ public class Join implements PartialQueryPlan {
     }
 
     @Override
-    public GraphTraversal<Map<String, Object>, Map<String, Object>> asTraversal() {
-        final GraphTraversal.Admin<Map<String, Object>, Map<String, Object>> leftAdmin = left.asTraversal().asAdmin();
-        final GraphTraversal.Admin<Map<String, Object>, Map<String, Object>> rightAdmin = right.asTraversal().asAdmin();
+    public GraphTraversal<Object, Object> asTraversal() {
+        final GraphTraversal.Admin<Object, Object> leftAdmin = left.asTraversal().asAdmin();
+        final GraphTraversal.Admin<Object, Object> rightAdmin = right.asTraversal().asAdmin();
         final JoinStep joinStep = new JoinStep(leftAdmin, rightAdmin, joinAttributes);
         leftAdmin.addStep(joinStep);
 
