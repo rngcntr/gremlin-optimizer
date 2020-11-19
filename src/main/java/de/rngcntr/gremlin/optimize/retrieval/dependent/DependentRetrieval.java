@@ -159,7 +159,7 @@ public abstract class DependentRetrieval<E extends Element>  extends Retrieval<E
         Retrieval<?> r = this;
         while (r instanceof DependentRetrieval) {
             PatternElement<?> otherSource = ((DependentRetrieval<?>) r).getSource();
-            if (getElement().equals(otherSource)) {
+            if (getElement() == otherSource) {
                 return true;
             }
             r = otherSource.getBestRetrieval();
