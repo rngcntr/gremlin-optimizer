@@ -1,11 +1,8 @@
 package de.rngcntr.gremlin.optimize.strategy;
 
-import de.rngcntr.gremlin.optimize.query.JoinAttribute;
-import de.rngcntr.gremlin.optimize.step.JoinStep;
 import org.apache.tinkerpop.gremlin.process.traversal.Step;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy;
-import org.apache.tinkerpop.gremlin.process.traversal.step.Scoping;
 import org.apache.tinkerpop.gremlin.process.traversal.step.filter.HasStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.EdgeVertexStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.VertexStep;
@@ -35,6 +32,7 @@ public class SkipEdgeStrategy extends AbstractTraversalStrategy<TraversalStrateg
     @Override
     public void apply(Traversal.Admin<?, ?> traversal) {
         TraversalHelper.getStepsOfAssignableClassRecursively(EdgeVertexStep.class, traversal).forEach(evs -> {
+            Traversal.Admin<Object, Object> currentSubTraversal = evs.getTraversal();
             Direction direction = evs.getDirection().opposite();
             Step<?,?> previousStep = evs.getPreviousStep();
             Set<String> edgeLabels = new HashSet<>();
@@ -52,12 +50,12 @@ public class SkipEdgeStrategy extends AbstractTraversalStrategy<TraversalStrateg
             if (previousStep instanceof VertexStep) {
                 VertexStep<?> previousVertexStep = (VertexStep<?>) previousStep;
                 if (previousVertexStep.returnsEdge() && previousVertexStep.getDirection().equals(direction)) {
-                    VertexStep<Edge> newVertexStep = new VertexStep(traversal, Vertex.class, direction, edgeLabels.toArray(new String[edgeLabels.size()]));
-                    TraversalHelper.insertAfterStep(newVertexStep, previousVertexStep.getPreviousStep(), traversal);
-                    traversal.removeStep(previousVertexStep);
-                    traversal.removeStep(evs);
+                    VertexStep<Edge> newVertexStep = new VertexStep(currentSubTraversal, Vertex.class, direction, edgeLabels.toArray(new String[edgeLabels.size()]));
+                    TraversalHelper.insertAfterStep(newVertexStep, previousVertexStep.getPreviousStep(), currentSubTraversal);
+                    currentSubTraversal.removeStep(previousVertexStep);
+                    currentSubTraversal.removeStep(evs);
                     if (hasStep != null) {
-                        traversal.removeStep(hasStep);
+                        currentSubTraversal.removeStep(hasStep);
                     }
                 }
             }
