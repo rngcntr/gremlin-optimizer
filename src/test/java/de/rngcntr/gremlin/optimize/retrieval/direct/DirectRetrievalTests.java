@@ -46,13 +46,13 @@ public class DirectRetrievalTests {
     @MethodSource("generateTestElements")
     @SuppressWarnings("unchecked")
     public <E extends Element> void testEstimation(PatternElement<E> element, StatisticsProvider stats,
-                                                   long expectedEstimation) {
+                                                   double expectedEstimation) {
         DirectRetrieval<E> r = Mockito.mock(DirectRetrieval.class,
                 Mockito.withSettings().defaultAnswer(Mockito.CALLS_REAL_METHODS));
         Mockito.when(r.getElement()).thenReturn(element);
 
         r.estimate(stats);
-        long estimation = r.getEstimatedSize();
+        double estimation = r.getEstimatedSize();
 
         assertEquals(expectedEstimation, estimation);
     }
@@ -68,27 +68,27 @@ public class DirectRetrievalTests {
 
         StatisticsProvider stats = Mockito.mock(StatisticsProvider.class);
 
-        Mockito.when(stats.totals(Vertex.class)).thenReturn(1000L);
-        Mockito.when(stats.withLabel(vertexLabelFilter)).thenReturn(100L);
-        Mockito.when(stats.withProperty(vertexLabelFilter, highSelectivityVertexProperty)).thenReturn(1L);
-        Mockito.when(stats.withProperty(vertexLabelFilter, lowSelectivityVertexProperty)).thenReturn(10L);
+        Mockito.when(stats.totals(Vertex.class)).thenReturn(1000D);
+        Mockito.when(stats.withLabel(vertexLabelFilter)).thenReturn(100D);
+        Mockito.when(stats.withProperty(vertexLabelFilter, highSelectivityVertexProperty)).thenReturn(1D);
+        Mockito.when(stats.withProperty(vertexLabelFilter, lowSelectivityVertexProperty)).thenReturn(10D);
 
-        Mockito.when(stats.totals(Edge.class)).thenReturn(2000L);
-        Mockito.when(stats.withLabel(edgeLabelFilter)).thenReturn(200L);
-        Mockito.when(stats.withProperty(edgeLabelFilter, highSelectivityEdgeProperty)).thenReturn(2L);
-        Mockito.when(stats.withProperty(edgeLabelFilter, lowSelectivityEdgeProperty)).thenReturn(20L);
+        Mockito.when(stats.totals(Edge.class)).thenReturn(2000D);
+        Mockito.when(stats.withLabel(edgeLabelFilter)).thenReturn(200D);
+        Mockito.when(stats.withProperty(edgeLabelFilter, highSelectivityEdgeProperty)).thenReturn(2D);
+        Mockito.when(stats.withProperty(edgeLabelFilter, lowSelectivityEdgeProperty)).thenReturn(20D);
 
         return Stream.of(
-                Arguments.of(MockedElementUtils.mockVertex(null), stats, 1000L),
-                Arguments.of(MockedElementUtils.mockEdge(null), stats, 2000L),
-                Arguments.of(MockedElementUtils.mockVertex(vertexLabelFilter), stats, 100L),
-                Arguments.of(MockedElementUtils.mockEdge(edgeLabelFilter), stats, 200L),
-                Arguments.of(MockedElementUtils.mockVertex(null, lowSelectivityVertexProperty), stats, 1000L),
-                Arguments.of(MockedElementUtils.mockEdge(null, lowSelectivityEdgeProperty), stats, 2000L),
-                Arguments.of(MockedElementUtils.mockVertex(vertexLabelFilter, lowSelectivityVertexProperty), stats, 10L),
-                Arguments.of(MockedElementUtils.mockEdge(edgeLabelFilter, lowSelectivityEdgeProperty), stats, 20L),
-                Arguments.of(MockedElementUtils.mockVertex(vertexLabelFilter, lowSelectivityVertexProperty, highSelectivityVertexProperty), stats, 1L),
-                Arguments.of(MockedElementUtils.mockEdge(edgeLabelFilter, lowSelectivityEdgeProperty, highSelectivityEdgeProperty), stats, 2L)
+                Arguments.of(MockedElementUtils.mockVertex(null), stats, 1000D),
+                Arguments.of(MockedElementUtils.mockEdge(null), stats, 2000D),
+                Arguments.of(MockedElementUtils.mockVertex(vertexLabelFilter), stats, 100D),
+                Arguments.of(MockedElementUtils.mockEdge(edgeLabelFilter), stats, 200D),
+                Arguments.of(MockedElementUtils.mockVertex(null, lowSelectivityVertexProperty), stats, 1000D),
+                Arguments.of(MockedElementUtils.mockEdge(null, lowSelectivityEdgeProperty), stats, 2000D),
+                Arguments.of(MockedElementUtils.mockVertex(vertexLabelFilter, lowSelectivityVertexProperty), stats, 10D),
+                Arguments.of(MockedElementUtils.mockEdge(edgeLabelFilter, lowSelectivityEdgeProperty), stats, 20D),
+                Arguments.of(MockedElementUtils.mockVertex(vertexLabelFilter, lowSelectivityVertexProperty, highSelectivityVertexProperty), stats, 1D),
+                Arguments.of(MockedElementUtils.mockEdge(edgeLabelFilter, lowSelectivityEdgeProperty, highSelectivityEdgeProperty), stats, 2D)
         );
     }
 }

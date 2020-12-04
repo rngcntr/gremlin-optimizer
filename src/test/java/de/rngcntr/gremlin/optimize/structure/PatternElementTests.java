@@ -395,7 +395,7 @@ public class PatternElementTests {
     }
 
     @SuppressWarnings("unchecked")
-    private static <E extends Element> DirectRetrieval<E> makeDirectRetrieval(PatternElement<E> elem, long estimation) {
+    private static <E extends Element> DirectRetrieval<E> makeDirectRetrieval(PatternElement<E> elem, double estimation) {
         DirectRetrieval<E> ret = Mockito.mock(DirectRetrieval.class, Mockito.withSettings().defaultAnswer(Mockito.CALLS_REAL_METHODS));
         Mockito.when(ret.getEstimatedSize()).thenReturn(estimation);
         Mockito.when(ret.getElement()).thenReturn(elem);
@@ -403,7 +403,7 @@ public class PatternElementTests {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static <E extends Element> DependentRetrieval<E> makeDependentRetrieval(PatternElement<E> elem, PatternElement<?> source, long estimation) {
+    private static <E extends Element> DependentRetrieval<E> makeDependentRetrieval(PatternElement<E> elem, PatternElement<?> source, double estimation) {
         DependentRetrieval<E> ret = Mockito.mock(DependentRetrieval.class, Mockito.withSettings().defaultAnswer(Mockito.CALLS_REAL_METHODS));
         Mockito.when(ret.getEstimatedSize()).thenReturn(estimation);
         Mockito.when(ret.getSource()).thenReturn((PatternElement) source);

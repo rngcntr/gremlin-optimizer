@@ -60,9 +60,9 @@ public class PatternGraph {
         while (!updateRequired.isEmpty()) {
             PatternElement<?> elementToUpdate = updateRequired.iterator().next();
             updateRequired.remove(elementToUpdate);
-            long sizeBeforeUpdate = elementToUpdate.getBestRetrieval().getEstimatedSize();
+            double sizeBeforeUpdate = elementToUpdate.getBestRetrieval().getEstimatedSize();
             elementToUpdate.estimateDependentRetrievals(stats);
-            long sizeAfterUpdate = elementToUpdate.getBestRetrieval().getEstimatedSize();
+            double sizeAfterUpdate = elementToUpdate.getBestRetrieval().getEstimatedSize();
 
             if (sizeAfterUpdate < sizeBeforeUpdate) {
                 updateRequired.addAll(elementToUpdate.getNeighbors(Direction.BOTH));

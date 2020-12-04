@@ -58,7 +58,7 @@ public class PropertyFilter<E extends Element> extends ElementFilter<E> {
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof PropertyFilter)) return false;
-        if (getFilteredType() != ((PropertyFilter) other).getFilteredType()) return false;
+        if (getFilteredType() != ((PropertyFilter<?>) other).getFilteredType()) return false;
         PropertyFilter<?> otherFilter = (PropertyFilter<?>) other;
         if (!StringUtils.equals(key, otherFilter.key)) return false;
         if (predicate == null) return otherFilter.predicate == null;

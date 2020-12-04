@@ -36,7 +36,7 @@ public interface StatisticsProvider {
      *            {@link org.apache.tinkerpop.gremlin.structure.Edge}.
      * @return The number of matching elements.
      */
-    <E extends Element> long totals(Class<E> clazz);
+    <E extends Element> double totals(Class<E> clazz);
 
     /**
      * Returns the total amount (or an estimation) of the specified element having a given label in the entire graph.
@@ -46,7 +46,7 @@ public interface StatisticsProvider {
      *            {@link org.apache.tinkerpop.gremlin.structure.Edge}.
      * @return The number of matching elements.
      */
-    <E extends Element> long withLabel(LabelFilter<E> label);
+    <E extends Element> double withLabel(LabelFilter<E> label);
 
     /**
      * Returns the total amount (or an estimation) of the specified element having a given property among all entities
@@ -58,7 +58,7 @@ public interface StatisticsProvider {
      *            {@link org.apache.tinkerpop.gremlin.structure.Edge}.
      * @return The number of matching elements.
      */
-    <E extends Element> long withProperty(LabelFilter<E> label, PropertyFilter<E> property);
+    <E extends Element> double withProperty(LabelFilter<E> label, PropertyFilter<E> property);
 
     /**
      * Returns the total amount (or an estimation) of the number of connections between two elements with the given
@@ -77,5 +77,5 @@ public interface StatisticsProvider {
      *            {@link org.apache.tinkerpop.gremlin.structure.Edge}.
      * @return The number of matching connections.
      */
-    <E1 extends Element, E2 extends Element> long connections(LabelFilter<E1> fromLabel, LabelFilter<E2> toLabel);
+    <E1 extends Element, E2 extends Element> double connections(LabelFilter<E1> fromLabel, LabelFilter<E2> toLabel);
 }

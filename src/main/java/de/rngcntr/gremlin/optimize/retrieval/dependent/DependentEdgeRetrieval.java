@@ -22,8 +22,6 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.map.VertexStep;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 
-import java.util.Map;
-
 /**
  * @author Florian Grieskamp
  *

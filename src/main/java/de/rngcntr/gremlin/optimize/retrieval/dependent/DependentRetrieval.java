@@ -83,7 +83,7 @@ public abstract class DependentRetrieval<E extends Element>  extends Retrieval<E
             return;
         }
 
-        long incomingSize = getSource().getBestRetrieval().getEstimatedSize();
+        double incomingSize = getSource().getBestRetrieval().getEstimatedSize();
 
         /*
             determine selectivity of label filter
@@ -92,28 +92,28 @@ public abstract class DependentRetrieval<E extends Element>  extends Retrieval<E
         if (getElement().hasLabelFilter()) {
             if (getSource().hasLabelFilter()) {
                 // calculate #{eLabel -> vLabel} / #{eLabel}
-                long absoluteConnections = getDirection() == Direction.OUT
+                double absoluteConnections = getDirection() == Direction.OUT
                         ? stats.connections(getElement().getLabelFilter(), getSource().getLabelFilter())
                         : stats.connections(getSource().getLabelFilter(), getElement().getLabelFilter());
-                labelSelectivity = (double) absoluteConnections / stats.withLabel(getSource().getLabelFilter());
+                labelSelectivity = absoluteConnections / stats.withLabel(getSource().getLabelFilter());
             } else {
                 // calculate #{e* -> vLabel} / #{e*}
-                long absoluteConnections = getDirection() == Direction.OUT
+                double absoluteConnections = getDirection() == Direction.OUT
                         ? stats.connections(getElement().getLabelFilter(), LabelFilter.empty(getSource().getType()))
                         : stats.connections(LabelFilter.empty(getSource().getType()), getElement().getLabelFilter());
-                labelSelectivity = (double) absoluteConnections / stats.totals(getSource().getType());
+                labelSelectivity = absoluteConnections / stats.totals(getSource().getType());
             }
         } else {
             if (getSource().hasLabelFilter()) {
-                long absoluteConnections = getDirection() == Direction.OUT
+                double absoluteConnections = getDirection() == Direction.OUT
                         ? stats.connections(LabelFilter.empty(getElement().getType()), getSource().getLabelFilter())
                         : stats.connections(getSource().getLabelFilter(), LabelFilter.empty((getElement().getType())));
-                labelSelectivity = (double) absoluteConnections / stats.withLabel(getSource().getLabelFilter());
+                labelSelectivity = absoluteConnections / stats.withLabel(getSource().getLabelFilter());
             } else {
-                long absoluteConnections = getDirection() == Direction.OUT
+                double absoluteConnections = getDirection() == Direction.OUT
                         ? stats.connections(LabelFilter.empty(getElement().getType()), LabelFilter.empty(getSource().getType()))
                         : stats.connections(LabelFilter.empty(getSource().getType()), LabelFilter.empty((getElement().getType())));
-                labelSelectivity = (double) absoluteConnections / stats.totals(getSource().getType());
+                labelSelectivity = absoluteConnections / stats.totals(getSource().getType());
             }
         }
 
@@ -123,17 +123,17 @@ public abstract class DependentRetrieval<E extends Element>  extends Retrieval<E
 
         double filterSelectivity = 1.0;
         if (getElement().hasLabelFilter()) {
-            long total = stats.withLabel(getElement().getLabelFilter());
-            Optional<Long> totalFiltered = getElement().getPropertyFilters().stream()
+            double total = stats.withLabel(getElement().getLabelFilter());
+            Optional<Double> totalFiltered = getElement().getPropertyFilters().stream()
                     .map(f -> stats.withProperty(getElement().getLabelFilter(), f))
-                    .min(Long::compareTo);
-            filterSelectivity = (double) totalFiltered.orElse(total) / total;
+                    .min(Double::compare);
+            filterSelectivity = totalFiltered.orElse(total) / total;
         }
 
         /*
             combine to estimation
          */
-        estimatedSize = (long) Math.ceil(incomingSize * labelSelectivity * filterSelectivity);
+        estimatedSize = Math.ceil(incomingSize * labelSelectivity * filterSelectivity);
     }
 
     /**
@@ -143,7 +143,7 @@ public abstract class DependentRetrieval<E extends Element>  extends Retrieval<E
      */
     @Override
     public String toString() {
-        return String.format("%d via %d, Estimation: ~%d", getElement().getId(), getSource().getId(), estimatedSize);
+        return String.format("%d via %d, Estimation: ~%.2f", getElement().getId(), getSource().getId(), estimatedSize);
     }
 
     /**

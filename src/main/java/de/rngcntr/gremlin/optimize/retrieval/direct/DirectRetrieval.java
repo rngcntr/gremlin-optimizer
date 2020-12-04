@@ -49,11 +49,11 @@ public abstract class DirectRetrieval<E extends Element>  extends Retrieval<E> {
         if (!getElement().hasLabelFilter()) {
             this.estimatedSize = stats.totals(getElement().getType());
         } else {
-            Long estimateByProperties = getElement().getPropertyFilters().stream()
+            Double estimateByProperties = getElement().getPropertyFilters().stream()
                     .map(f -> stats.withProperty(getElement().getLabelFilter(), f))
-                    .min(Long::compareTo)
+                    .min(Double::compare)
                     .orElse(IMPOSSIBLE);
-            long estimateByLabel = stats.withLabel(getElement().getLabelFilter());
+            double estimateByLabel = stats.withLabel(getElement().getLabelFilter());
             this.estimatedSize = Math.min(estimateByProperties, estimateByLabel);
         }
 
@@ -66,6 +66,6 @@ public abstract class DirectRetrieval<E extends Element>  extends Retrieval<E> {
      */
     @Override
     public String toString() {
-        return String.format("%d Direct, Estimation: ~%d", getElement().getId(), estimatedSize);
+        return String.format("%d Direct, Estimation: ~%.2f", getElement().getId(), estimatedSize);
     }
 }

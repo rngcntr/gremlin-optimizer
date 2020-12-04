@@ -41,7 +41,7 @@ public abstract class Retrieval<E extends Element> implements Comparable<Retriev
     /**
      * The most recent result size estimation for this retrieval.
      */
-    protected long estimatedSize;
+    protected double estimatedSize;
 
     /**
      * The pattern element that defines a pattern for matching elements in the graph.
@@ -51,7 +51,7 @@ public abstract class Retrieval<E extends Element> implements Comparable<Retriev
     /**
      * If a retrieval is not executable, it's expected result size is assigned this value.
      */
-    public static final Long IMPOSSIBLE = Long.MAX_VALUE;
+    public static final Double IMPOSSIBLE = Double.POSITIVE_INFINITY;
 
     /**
      * Creates a retrieval and estimates it as impossible.
@@ -99,7 +99,7 @@ public abstract class Retrieval<E extends Element> implements Comparable<Retriev
      *
      * @return The estimated result size.
      */
-    public long getEstimatedSize() {
+    public double getEstimatedSize() {
         return estimatedSize;
     }
 
@@ -115,7 +115,7 @@ public abstract class Retrieval<E extends Element> implements Comparable<Retriev
      */
     @Override
     public int compareTo(Retrieval<?> other) {
-        return Long.compare(this.getEstimatedSize(), other.getEstimatedSize());
+        return Double.compare(this.getEstimatedSize(), other.getEstimatedSize());
     }
 
     /**

@@ -18,7 +18,6 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import de.rngcntr.gremlin.optimize.statistics.StatisticsProvider;
 import de.rngcntr.gremlin.optimize.structure.PatternGraph;
-import de.rngcntr.gremlin.optimize.util.TraverserUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;

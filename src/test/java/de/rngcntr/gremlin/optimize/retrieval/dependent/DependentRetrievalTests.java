@@ -50,23 +50,23 @@ public class DependentRetrievalTests {
 
         StatisticsProvider stats = Mockito.mock(StatisticsProvider.class);
 
-        long vTotal = 10_000L, vLabel = 1_000L, vHighSel = 10L, vLowSel = 100L;
+        double vTotal = 10_000, vLabel = 1_000, vHighSel = 10, vLowSel = 100;
         Mockito.when(stats.totals(Vertex.class)).thenReturn(vTotal);
         Mockito.when(stats.withLabel(vertexLabelFilter)).thenReturn(vLabel);
         Mockito.when(stats.withProperty(vertexLabelFilter, highSelectivityVertexProperty)).thenReturn(vHighSel);
         Mockito.when(stats.withProperty(vertexLabelFilter, lowSelectivityVertexProperty)).thenReturn(vLowSel);
 
-        long eTotal = 20_000L, eLabel = 2_000L, eHighSel = 20L, eLowSel = 200L;
+        double eTotal = 20_000, eLabel = 2_000, eHighSel = 20, eLowSel = 200;
         Mockito.when(stats.totals(Edge.class)).thenReturn(eTotal);
         Mockito.when(stats.withLabel(edgeLabelFilter)).thenReturn(eLabel);
         Mockito.when(stats.withProperty(edgeLabelFilter, highSelectivityEdgeProperty)).thenReturn(eHighSel);
         Mockito.when(stats.withProperty(edgeLabelFilter, lowSelectivityEdgeProperty)).thenReturn(eLowSel);
 
-        long vL2eL = 300L, eL2vL = 400L;
+        double vL2eL = 300, eL2vL = 400;
         Mockito.when(stats.connections(vertexLabelFilter, edgeLabelFilter)).thenReturn(vL2eL);
         Mockito.when(stats.connections(edgeLabelFilter, vertexLabelFilter)).thenReturn(eL2vL);
 
-        long vL2e = 3_000L, eL2v = 4_000L, e2vL = 5_000L, v2eL = 6_000L, e2v = 7_000L, v2e = 8_000L;
+        double vL2e = 3_000, eL2v = 4_000, e2vL = 5_000, v2eL = 6_000, e2v = 7_000, v2e = 8_000;
         Mockito.when(stats.connections(vertexLabelFilter, LabelFilter.empty(Edge.class))).thenReturn(vL2e);
         Mockito.when(stats.connections(edgeLabelFilter, LabelFilter.empty(Vertex.class))).thenReturn(eL2v);
         Mockito.when(stats.connections(LabelFilter.empty(Edge.class), vertexLabelFilter)).thenReturn(e2vL);
@@ -74,7 +74,7 @@ public class DependentRetrievalTests {
         Mockito.when(stats.connections(LabelFilter.empty(Edge.class), LabelFilter.empty(Vertex.class))).thenReturn(e2v);
         Mockito.when(stats.connections(LabelFilter.empty(Vertex.class), LabelFilter.empty(Edge.class))).thenReturn(v2e);
 
-        long incoming = 1_000_000L;
+        double incoming = 1_000_000;
 
         PatternVertex vertex = MockedElementUtils.mockVertex(incoming, null);
         PatternVertex labeledVertex = MockedElementUtils.mockVertex(incoming, vertexLabelFilter);
@@ -199,7 +199,7 @@ public class DependentRetrievalTests {
     @MethodSource("generateTestElements")
     @SuppressWarnings("rawtypes")
     public void testEstimation(PatternElement element, PatternElement source, StatisticsProvider stats,
-                               Direction direction, long expectedEstimation) {
+                               Direction direction, double expectedEstimation) {
         DependentRetrieval r = Mockito.mock(DependentRetrieval.class,
                 Mockito.withSettings().defaultAnswer(Mockito.CALLS_REAL_METHODS));
         Mockito.when(r.getElement()).thenReturn(element);
@@ -207,7 +207,7 @@ public class DependentRetrievalTests {
         Mockito.when(r.getDirection()).thenReturn(direction);
 
         r.estimate(stats);
-        long estimation = r.getEstimatedSize();
+        double estimation = r.getEstimatedSize();
 
         assertEquals(expectedEstimation, estimation);
     }

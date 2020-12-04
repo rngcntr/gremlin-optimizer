@@ -53,7 +53,7 @@ public class RetrievalTests {
             "2, 1, 1",
             "1, 2, -1"
     })
-    public void testCompareTo(long expectedA, long expectedB, int result) {
+    public void testCompareTo(double expectedA, double expectedB, int result) {
         Retrieval<?> a = Mockito.mock(Retrieval.class,
                 Mockito.withSettings().useConstructor().defaultAnswer(Mockito.CALLS_REAL_METHODS));
         Mockito.when(a.getEstimatedSize()).thenReturn(expectedA);
