@@ -53,6 +53,7 @@ public class SkipEdgeStrategy extends AbstractTraversalStrategy<TraversalStrateg
             HasStep<?> hasStep = null;
             if (previousStep instanceof HasStep) {
                 hasStep = (HasStep<?>) previousStep;
+                if (!hasStep.getLabels().isEmpty()) return; // labels indicate that this edge is used later on
                 List<HasContainer> hasContainers = ((HasStep) previousStep).getHasContainers();
                 if (hasContainers.stream().anyMatch(hc -> !hc.getKey().equals(T.label.getAccessor()))) {
                     return;
